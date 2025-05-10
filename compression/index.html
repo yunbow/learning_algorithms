@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>データ圧縮の問題</title>
+    <link rel="stylesheet" href="./../styles.css">
+</head>
+<body>
+    <div class="container">
+        <h1>データ圧縮の問題</h1>
+
+        <div class="section">
+            <h2>問題の概要</h2>
+            <p>データ圧縮とは、情報を効率的に表現するためにデータサイズを削減するプロセスです。圧縮の主な目的は、保存領域の節約、ネットワーク帯域幅の削減、データ転送時間の短縮です。</p>
+            <p>主な課題は以下の通りです：</p>
+            <ul>
+                <li>圧縮率と圧縮・展開速度のトレードオフ</li>
+                <li>様々なデータ型（テキスト、画像、音声など）に対する適切なアルゴリズム選択</li>
+                <li>可逆圧縮（ロスレス）と非可逆圧縮（ロッシー）の選択</li>
+                <li>メモリ使用量の制約</li>
+                <li>ストリーミングデータへの対応</li>
+            </ul>    
+        </div>
+        
+        <div class="section">
+            <h2>アルゴリズム</h2>
+            <ul>
+                <li> (<a href="./euclidean/">説明</a>) (<a href=".//">ソースコード</a>)</li>
+                <li></li>
+            </ul>
+        </div>    
+
+        <div class="section">
+            <h2>アルゴリズム比較表</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>アルゴリズム</th>
+                        <th>平均計算量</th>
+                        <th>長所</th>
+                        <th>短所</th>
+                        <th>適用ケース</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>ハフマン符号化</strong></td>
+                        <td>O(n log n)</td>
+                        <td>
+                            <ul>
+                                <li>実装が比較的簡単</li>
+                                <li>静的なデータに対して効率的</li>
+                                <li>デコードが高速</li>
+                            </ul>
+                        </td>
+                        <td>
+                            <ul>
+                                <li>シンボルごとに最低1ビット必要</li>
+                                <li>確率分布が変化するデータに対して非効率的</li>
+                                <li>シンボルテーブルのオーバーヘッド</li>
+                            </ul>
+                        </td>
+                        <td>
+                            <ul>
+                                <li>テキストファイル</li>
+                                <li>JPEG（非可逆部分）</li>
+                                <li>MP3</li>
+                                <li>静的な確率分布を持つデータ</li>
+                            </ul>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><strong>算術符号化</strong></td>
+                        <td>O(n)</td>
+                        <td>
+                            <ul>
+                                <li>ハフマンよりも理論的に優れた圧縮率</li>
+                                <li>シンボルに1ビット未満を割り当て可能</li>
+                                <li>適応型実装が可能</li>
+                            </ul>
+                        </td>
+                        <td>
+                            <ul>
+                                <li>演算精度の問題</li>
+                                <li>ハフマンより計算コストが高い</li>
+                                <li>特許の問題（一部は期限切れ）</li>
+                                <li>ストリーミング処理が困難</li>
+                            </ul>
+                        </td>
+                        <td>
+                            <ul>
+                                <li>高い圧縮率が必要なケース</li>
+                                <li>JPEG2000</li>
+                                <li>H.264/AVC</li>
+                                <li>確率の偏りが大きいデータ</li>
+                            </ul>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><strong>LZW</strong></td>
+                        <td>O(n)</td>
+                        <td>
+                            <ul>
+                                <li>辞書ベースで実装が比較的容易</li>
+                                <li>事前の確率分布知識不要</li>
+                                <li>エンコード・デコードが高速</li>
+                            </ul>
+                        </td>
+                        <td>
+                            <ul>
+                                <li>辞書サイズの制限</li>
+                                <li>繰り返しパターンが少ないデータでは非効率</li>
+                                <li>かつては特許の問題（現在は期限切れ）</li>
+                            </ul>
+                        </td>
+                        <td>
+                            <ul>
+                                <li>GIF画像</li>
+                                <li>PDF</li>
+                                <li>TIFF</li>
+                                <li>繰り返しが多いテキストデータ</li>
+                            </ul>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><strong>ランレングス符号化</strong></td>
+                        <td>O(n)</td>
+                        <td>
+                            <ul>
+                                <li>非常にシンプルで実装が容易</li>
+                                <li>エンコード・デコードが超高速</li>
+                                <li>メモリ使用量が少ない</li>
+                            </ul>
+                        </td>
+                        <td>
+                            <ul>
+                                <li>特定のデータタイプにのみ効果的</li>
+                                <li>ランダムデータでは逆に拡大する可能性</li>
+                                <li>圧縮率が他のアルゴリズムに比べて低い</li>
+                            </ul>
+                        </td>
+                        <td>
+                            <ul>
+                                <li>ビットマップ画像（BMP）</li>
+                                <li>FAX送信（CCITT Group 3/4）</li>
+                                <li>同じ値が連続するバイナリデータ</li>
+                                <li>PCX画像</li>
+                            </ul>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><strong>レンペル-ジブ</strong></td>
+                        <td>O(n)</td>
+                        <td>
+                            <ul>
+                                <li>高速なエンコード処理</li>
+                                <li>適応型で事前知識不要</li>
+                                <li>多様なバリアント（LZSS, LZ77, LZ78など）</li>
+                            </ul>
+                        </td>
+                        <td>
+                            <ul>
+                                <li>スライディングウィンドウサイズの制限</li>
+                                <li>検索バッファが大きいとメモリ消費量増加</li>
+                                <li>小さいファイルでは効率が下がる</li>
+                            </ul>
+                        </td>
+                        <td>
+                            <ul>
+                                <li>ZIP/gzip（LZ77の変種）</li>
+                                <li>PNG画像</li>
+                                <li>一般的なファイル圧縮</li>
+                                <li>ストリーミングデータ</li>
+                            </ul>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><strong>Brotli</strong></td>
+                        <td>O(n log n)</td>
+                        <td>
+                            <ul>
+                                <li>高い圧縮率（gzipより20-26%向上）</li>
+                                <li>静的辞書による効率化</li>
+                                <li>解凍速度が速い</li>
+                            </ul>
+                        </td>
+                        <td>
+                            <ul>
+                                <li>圧縮速度が比較的遅い</li>
+                                <li>メモリ使用量が多い</li>
+                                <li>小さいファイルでのオーバーヘッド</li>
+                            </ul>
+                        </td>
+                        <td>
+                            <ul>
+                                <li>ウェブコンテンツ（WOFF2フォント）</li>
+                                <li>HTTPレスポンス圧縮</li>
+                                <li>静的コンテンツ配信</li>
+                                <li>テキストベースのウェブリソース</li>
+                            </ul>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</body>
+</html>

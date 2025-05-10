@@ -71,8 +71,6 @@ h1 {
     font-size: var(--h1-font-size);
     color: var(--heading-color);
     text-align: center;
-    margin-top: var(--heading-margin-top); /* Consistent margin top */
-    margin-bottom: 30px; /* Keep original for h1 for visual separation */
     border-bottom: 2px solid var(--primary-color);
     padding-bottom: 10px;
 }

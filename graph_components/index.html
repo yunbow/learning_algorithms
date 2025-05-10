@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>グラフの連結成分問題</title>
+    <link rel="stylesheet" href="./../styles.css">
+</head>
+<body>
+    <div class="container">
+        <h1>グラフの連結成分問題</h1>    
+
+        <div class="section">
+            <h2>問題の概要</h2>
+            <p>グラフの連結成分（Connected Components）とは、グラフ内で互いに到達可能な頂点の集合です。連結成分の検出は、グラフ理論において基本的かつ重要な問題です。</p>
+            <p>主な課題は以下の通りです：</p>
+            <ul>
+                <li>グラフ内の連結成分の数を数える</li>
+                <li>各頂点がどの連結成分に属しているかを識別する</li>
+                <li>最大の連結成分のサイズを見つける</li>
+            </ul>
+            <p>この問題は、ソーシャルネットワーク分析、画像セグメンテーション、コンピュータネットワークの分析など、
+            多くの実用的なアプリケーションに応用されています。</p>        
+        </div>
+
+        <div class="section">
+            <h2>アルゴリズム比較表</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>アルゴリズム</th>
+                        <th>時間計算量</th>
+                        <th>空間計算量</th>
+                        <th>長所</th>
+                        <th>短所</th>
+                        <th>適用ケース</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>深さ優先探索<br/>(DFS)</strong></td>
+                        <td>O(V + E)</td>
+                        <td>O(V)</td>
+                        <td>
+                            <ul>
+                                <li>実装が簡単</li>
+                                <li>再帰的なアプローチが直感的</li>
+                                <li>特定のパスを探索するのに有効</li>
+                            </ul>
+                        </td>
+                        <td>
+                            <ul>
+                                <li>再帰スタックのオーバーフローの可能性</li>
+                                <li>最短経路を見つけるのには適さない</li>
+                            </ul>
+                        </td>
+                        <td>
+                            <ul>
+                                <li>迷路の解法</li>
+                                <li>トポロジカルソート</li>
+                                <li>深いグラフ構造の探索</li>
+                            </ul>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><strong>幅優先探索<br/>(BFS)</strong></td>
+                        <td>O(V + E)</td>
+                        <td>O(V)</td>
+                        <td>
+                            <ul>
+                                <li>最短経路を見つけるのに最適</li>
+                                <li>レベル順の探索に効果的</li>
+                                <li>無限ループの回避が容易</li>
+                            </ul>
+                        </td>
+                        <td>
+                            <ul>
+                                <li>キューによるメモリ使用量が多い</li>
+                                <li>深いグラフでは効率が悪化する可能性</li>
+                            </ul>
+                        </td>
+                        <td>
+                            <ul>
+                                <li>最短経路問題</li>
+                                <li>レベル順の探索が必要な場合</li>
+                                <li>幅広いグラフ構造の探索</li>
+                            </ul>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><strong>Union-Find</strong></td>
+                        <td>ほぼO(E)</td>
+                        <td>O(V)</td>
+                        <td>
+                            <ul>
+                                <li>動的グラフに効率的</li>
+                                <li>実装が比較的簡単</li>
+                                <li>経路圧縮と重み付きの統合によって効率化可能</li>
+                            </ul>
+                        </td>
+                        <td>
+                            <ul>
+                                <li>特定の頂点間の到達可能性の確認が困難</li>
+                                <li>グラフの探索には向かない</li>
+                            </ul>
+                        </td>
+                        <td>
+                            <ul>
+                                <li>Kruskalのアルゴリズム</li>
+                                <li>動的な連結性の確認</li>
+                                <li>オンラインでのグラフ更新が多い場合</li>
+                            </ul>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>    
+            <p><small>注: V は頂点数、E は辺数を表します。Union-Find の時間計算量は、経路圧縮と重み付きの統合を使用した場合、実質的にほぼ線形（O(E)）になります。</small></p>
+        </div>
+    </div>
+</body>
+</html>

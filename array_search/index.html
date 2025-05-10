@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>配列の検索問題</title>
+    <link rel="stylesheet" href="./../styles.css">
+</head>
+<body>
+    <div class="container">
+        <h1>配列の検索問題</h1>
+
+        <div class="section">
+            <h2>問題の概要</h2>
+            <p>配列の検索問題とは、与えられた配列内から特定の要素（検索キー）を見つけ出す操作です。この問題は、データ構造とアルゴリズムの基本的な課題であり、多くのアプリケーションで頻繁に使用されます。</p>        
+            <p>主な課題は以下の通りです：</p>
+            <ul>
+                <li>大量のデータから効率的に目的の値を見つけること</li>
+                <li>検索速度とメモリ使用量のバランスを取ること</li>
+                <li>データの特性（ソート済みか否か、重複の有無など）に応じた適切なアルゴリズムの選択</li>
+                <li>動的に変化するデータセットへの対応</li>
+            </ul>    
+        </div>
+
+        <div class="section">
+            <h2>アルゴリズム比較表</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>アルゴリズム</th>
+                        <th>平均計算量</th>
+                        <th>長所</th>
+                        <th>短所</th>
+                        <th>適用ケース</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>線形探索<br>(Linear Search)</strong></td>
+                        <td>O(n)</td>
+                        <td>
+                            <ul>
+                                <li>実装が非常に簡単</li>
+                                <li>ソートされていない配列でも使用可能</li>
+                                <li>追加のメモリが不要</li>
+                            </ul>
+                        </td>
+                        <td>
+                            <ul>
+                                <li>大きな配列では非効率</li>
+                                <li>最悪の場合、全要素を調べる必要がある</li>
+                            </ul>
+                        </td>
+                        <td>
+                            <ul>
+                                <li>小さな配列</li>
+                                <li>ソートされていない配列</li>
+                                <li>一度だけ検索する場合</li>
+                            </ul>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><strong>二分探索<br>(Binary Search)</strong></td>
+                        <td>O(log n)</td>
+                        <td>
+                            <ul>
+                                <li>大きな配列でも高速</li>
+                                <li>効率的な検索アルゴリズム</li>
+                                <li>追加のメモリが不要</li>
+                            </ul>
+                        </td>
+                        <td>
+                            <ul>
+                                <li>配列がソートされている必要がある</li>
+                                <li>動的なデータには向かない</li>
+                                <li>頻繁な挿入/削除を伴う場合は再ソートが必要</li>
+                            </ul>
+                        </td>
+                        <td>
+                            <ul>
+                                <li>ソート済みの大きな配列</li>
+                                <li>繰り返し検索する場合</li>
+                                <li>メモリ制約がある環境</li>
+                            </ul>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><strong>ハッシュ探索<br>(Hash Search)</strong></td>
+                        <td>O(1)<small>*1</small></td>
+                        <td>
+                            <ul>
+                                <li>理想的な場合、定数時間での検索</li>
+                                <li>データサイズに関係なく高速</li>
+                                <li>挿入と削除も高速</li>
+                            </ul>
+                        </td>
+                        <td>
+                            <ul>
+                                <li>ハッシュ関数の品質に依存</li>
+                                <li>衝突解決が必要</li>
+                                <li>追加のメモリが必要</li>
+                                <li>最悪の場合O(n)になる可能性</li>
+                            </ul>
+                        </td>
+                        <td>
+                            <ul>
+                                <li>頻繁な検索操作</li>
+                                <li>メモリ制約がない環境</li>
+                                <li>高速な検索が優先される場合</li>
+                                <li>動的なデータセット</li>
+                            </ul>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+            <p><small>*1 衝突がない理想的な場合。実際にはハッシュ関数の性能や衝突解決方法に依存します。</small></p>    
+        </div>
+    </div>
+</body>
+</html>

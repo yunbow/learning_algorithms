@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ランダム文字列問題</title>
+    <link rel="stylesheet" href="./../styles.css">
+</head>
+<body>
+    <h1>ランダム文字列問題</h1>
+    
+    <div class="section">
+        <h2>問題の概要</h2>
+        <p>ランダム文字列問題とは、大量の文字列データから特定の条件を満たす要素を効率的に選択または処理する問題です。この問題では、確率的なアプローチが効果的である場合が多いです。</p>
+        <p>主な課題は以下の通りです：</p>
+        <ul>
+            <li>大規模なデータセットから無作為にサンプリングを行う必要がある</li>
+            <li>全数探索が計算量的に現実的でない</li>
+            <li>近似解でも構わない場合と厳密解が必要な場合がある</li>
+            <li>オンラインアルゴリズムとして動作する必要がある場合がある</li>
+        </ul>
+    </div>
+    
+    <div class="section">
+        <h2>アルゴリズム比較表</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>アルゴリズム</th>
+                    <th>平均計算量</th>
+                    <th>長所</th>
+                    <th>短所</th>
+                    <th>適用ケース</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>モンテカルロ法</strong></td>
+                    <td>O(log n) 〜 O(n)</td>
+                    <td>
+                        <ul>
+                            <li>実装が比較的簡単</li>
+                            <li>大規模データに適用可能</li>
+                            <li>並列処理に向いている</li>
+                        </ul>
+                    </td>
+                    <td>
+                        <ul>
+                            <li>結果が確率的で毎回異なる</li>
+                            <li>精度が試行回数に依存</li>
+                            <li>厳密解を保証しない</li>
+                        </ul>
+                    </td>
+                    <td>
+                        <ul>
+                            <li>近似解で十分な場合</li>
+                            <li>大規模なテキストマイニング</li>
+                            <li>パターンマッチングの前処理</li>
+                        </ul>
+                    </td>
+                </tr>
+                <tr>
+                    <td><strong>ラスベガス法</strong></td>
+                    <td>期待値 O(n)</td>
+                    <td>
+                        <ul>
+                            <li>常に正確な結果を返す</li>
+                            <li>最悪の場合でも結果の正確性は保証</li>
+                            <li>モンテカルロ法より信頼性が高い</li>
+                        </ul>
+                    </td>
+                    <td>
+                        <ul>
+                            <li>実行時間が不確定</li>
+                            <li>最悪の場合O(n²)になる可能性</li>
+                            <li>大規模データでは効率が落ちる</li>
+                        </ul>
+                    </td>
+                    <td>
+                        <ul>
+                            <li>正確さが必要な検索処理</li>
+                            <li>確率的なソートアルゴリズム</li>
+                            <li>厳密解が必要な文字列照合</li>
+                        </ul>
+                    </td>
+                </tr>
+                <tr>
+                    <td><strong>クイックセレクト</strong></td>
+                    <td>平均 O(n)</td>
+                    <td>
+                        <ul>
+                            <li>最悪でもO(n)で動作するバージョンがある</li>
+                            <li>メモリ効率が良い</li>
+                            <li>k番目の要素を高速に見つけられる</li>
+                        </ul>
+                    </td>
+                    <td>
+                        <ul>
+                            <li>ピボット選択により性能が左右される</li>
+                            <li>安定したソートではない</li>
+                            <li>実装が他と比べて複雑</li>
+                        </ul>
+                    </td>
+                    <td>
+                        <ul>
+                            <li>中央値や特定順位の要素を探す場合</li>
+                            <li>部分ソートが必要な場合</li>
+                            <li>Top-K問題</li>
+                        </ul>
+                    </td>
+                </tr>
+            </tbody>
+        </table>    
+    </div>
+</body>
+</html>

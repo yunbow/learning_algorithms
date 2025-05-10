@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>配列の並べ替え問題</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="./../styles.css">
+</head>
+<body>
+    <div class="container">
+        <h1>配列の並べ替え問題</h1>
+        
+        <div class="section">
+            <h2>問題の概要</h2>
+            <p>「配列の並べ替え」問題とは、与えられた配列内の要素を特定の順序（一般的には昇順または降順）に並べ替える問題です。これはコンピュータサイエンスにおける基本的かつ重要な問題であり、データ処理やアルゴリズム設計の基礎となります。</p>        
+            <p>主な課題は以下の通りです：</p>
+            <ul>
+                <li>効率的な時間計算量（特に大きなデータセットに対して）</li>
+                <li>適切な空間計算量（使用メモリの最適化）</li>
+                <li>安定性（同じ値の要素の相対順序が保持されるか）</li>
+                <li>データの特性に応じた適切なアルゴリズム選択</li>
+                <li>実装の複雑さとコード最適化</li>
+            </ul>                
+        </div>
+
+        <div class="section">
+            <h2>アルゴリズム</h2>
+            <ul>
+                <li>クイックソート (<a href="./sort_quick/">詳細</a>) (<a href="">ソースコード</a>)</li>
+                <li>マージソート (<a href="./sort_merge/">詳細</a>) (<a href="">ソースコード</a>)</li>
+                <li>ヒープソート (<a href="./sort_heap/">詳細</a>) (<a href="">ソースコード</a>)</li>
+                <li>バブルソート (<a href="./sort_bubble/">詳細</a>) (<a href="">ソースコード</a>)</li>
+                <li>挿入ソート (<a href="./sort_insertion/">詳細</a>) (<a href="">ソースコード</a>)</li>
+                <li>選択ソート (<a href="./sort_selection/">詳細</a>) (<a href="">ソースコード</a>)</li>
+            </ul>    
+        </div>
+
+        <div class="section">
+            <h2>アルゴリズム比較表</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>アルゴリズム</th>
+                        <th>平均計算量</th>
+                        <th>長所</th>
+                        <th>短所</th>
+                        <th>適用ケース</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>クイックソート</strong></td>
+                        <td>O(n log n)</td>
+                        <td>
+                            <ul>
+                                <li>実装が比較的簡単</li>
+                                <li>実践的に非常に高速</li>
+                                <li>インプレースで動作可能（追加メモリが少ない）</li>
+                            </ul>
+                        </td>
+                        <td>
+                            <ul>
+                                <li>最悪の場合O(n²)になる</li>
+                                <li>安定ではない</li>
+                                <li>ピボット選択が重要</li>
+                            </ul>
+                        </td>
+                        <td>
+                            <ul>
+                                <li>平均的なケースで高速ソートが必要なとき</li>
+                                <li>メモリ消費を抑えたいとき</li>
+                                <li>大規模データセット</li>
+                            </ul>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><strong>マージソート</strong></td>
+                        <td>O(n log n)</td>
+                        <td>
+                            <ul>
+                                <li>安定ソート</li>
+                                <li>最悪ケースでもO(n log n)</li>
+                                <li>連結リストに適している</li>
+                            </ul>
+                        </td>
+                        <td>
+                            <ul>
+                                <li>追加のO(n)メモリが必要</li>
+                                <li>小さな配列では比較的遅い</li>
+                                <li>インプレースではない</li>
+                            </ul>
+                        </td>
+                        <td>
+                            <ul>
+                                <li>安定性が必要なとき</li>
+                                <li>予測可能な性能が必要なとき</li>
+                                <li>外部ソートの基礎として</li>
+                            </ul>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><strong>ヒープソート</strong></td>
+                        <td>O(n log n)</td>
+                        <td>
+                            <ul>
+                                <li>インプレースで動作</li>
+                                <li>最悪ケースでもO(n log n)</li>
+                                <li>メモリ効率が良い</li>
+                            </ul>
+                        </td>
+                        <td>
+                            <ul>
+                                <li>平均的にクイックソートより遅い</li>
+                                <li>安定ではない</li>
+                                <li>キャッシュ効率が低い</li>
+                            </ul>
+                        </td>
+                        <td>
+                            <ul>
+                                <li>メモリ消費を最小限に抑えたいとき</li>
+                                <li>最悪ケースの性能保証が必要なとき</li>
+                                <li>優先度キューの実装に</li>
+                            </ul>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><strong>バブルソート</strong></td>
+                        <td>O(n²)</td>
+                        <td>
+                            <ul>
+                                <li>実装が非常に簡単</li>
+                                <li>安定ソート</li>
+                                <li>早期終了の最適化が可能</li>
+                            </ul>
+                        </td>
+                        <td>
+                            <ul>
+                                <li>非常に遅い（大規模データに不向き）</li>
+                                <li>多数の交換操作</li>
+                                <li>実用的でない性能</li>
+                            </ul>
+                        </td>
+                        <td>
+                            <ul>
+                                <li>教育目的</li>
+                                <li>ほぼソート済みの小さなデータセット</li>
+                                <li>メモリ制約が非常に厳しい環境</li>
+                            </ul>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><strong>挿入ソート</strong></td>
+                        <td>O(n²)</td>
+                        <td>
+                            <ul>
+                                <li>小さなデータセットで効率的</li>
+                                <li>安定ソート</li>
+                                <li>オンラインアルゴリズム（データが逐次到着する場合に適用可能）</li>
+                            </ul>
+                        </td>
+                        <td>
+                            <ul>
+                                <li>大規模データでは非効率</li>
+                                <li>多くの要素シフトが必要</li>
+                            </ul>
+                        </td>
+                        <td>
+                            <ul>
+                                <li>小さな配列（通常10〜20要素未満）</li>
+                                <li>ほぼソート済みのデータ</li>
+                                <li>他のアルゴリズムのサブルーチンとして</li>
+                            </ul>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><strong>選択ソート</strong></td>
+                        <td>O(n²)</td>
+                        <td>
+                            <ul>
+                                <li>実装が簡単</li>
+                                <li>書き込み操作の数が最小（O(n)）</li>
+                                <li>インプレースで動作</li>
+                            </ul>
+                        </td>
+                        <td>
+                            <ul>
+                                <li>常にO(n²)（入力データに関係なく）</li>
+                                <li>安定ではない</li>
+                                <li>大規模データに不向き</li>
+                            </ul>
+                        </td>
+                        <td>
+                            <ul>
+                                <li>書き込みコストが高いメモリ（フラッシュなど）</li>
+                                <li>入力サイズが非常に小さいとき</li>
+                                <li>単純さが優先される場合</li>
+                            </ul>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>    
+        </div>
+    </div>
+</body>
+</html>

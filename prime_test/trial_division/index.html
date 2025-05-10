@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>素数判定の試し割り法アニメーション</title>
+    <style>
+        body {
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        .container {
+            background-color: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .input-section {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px;
+            gap: 10px;
+            align-items: center;
+        }
+        .control-section {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px;
+            gap: 10px;
+        }
+        input {
+            padding: 8px;
+            font-size: 16px;
+            border: 1px solid #ccc;
+            border-radius: S4px;
+            width: 100px;
+        }
+        button {
+            padding: 8px 16px;
+            background-color: #4285f4;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #3367d6;
+        }
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+        .visualization {
+            margin-top: 20px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background-color: #f9f9f9;
+            min-height: 300px;
+        }
+        .algorithm-step {
+            margin-bottom: 10px;
+            padding: 10px;
+            border-radius: 4px;
+            transition: background-color 0.3s;
+        }
+        .active-step {
+            background-color: #e3f2fd;
+            border-left: 5px solid #2196f3;
+        }
+        .completed-step {
+            background-color: #e8f5e9;
+            border-left: 5px solid #4caf50;
+        }
+        .failed-step {
+            background-color: #ffebee;
+            border-left: 5px solid #f44336;
+        }
+        .algorithm-explanation {
+            margin-top: 20px;
+            font-style: italic;
+            color: #666;
+        }
+        .status {
+            margin-top: 20px;
+            font-weight: bold;
+            text-align: center;
+            font-size: 18px;
+        }
+        .animation-control {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        .divisor {
+            display: inline-block;
+            padding: 5px 10px;
+            margin: 5px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            transition: all 0.3s;
+        }
+        .current-divisor {
+            background-color: #ffeb3b;
+            font-weight: bold;
+        }
+        .divisible {
+            background-color: #f44336;
+            color: white;
+        }
+        .not-divisible {
+            background-color: #4caf50;
+            color: white;
+        }
+        .number-line {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-top: 20px;
+        }
+        .conclusion {
+            margin-top: 20px;
+            font-size: 20px;
+            text-align: center;
+            font-weight: bold;
+            padding: 10px;
+            border-radius: 4px;
+            display: none;
+        }
+        .is-prime {
+            background-color: #e8f5e9;
+            color: #2e7d32;
+        }
+        .not-prime {
+            background-color: #ffebee;
+            color: #c62828;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>素数判定の試し割り法アニメーション</h1>
+        
+        <div class="input-section">
+            <label for="number">判定する数値:</label>
+            <input type="number" id="number" min="1" value="17">
+            <button id="check-btn">判定開始</button>
+        </div>
+        
+        <div class="control-section">
+            <button id="clear-btn">クリア</button>
+            <button id="animation-btn">アニメーション実行/停止</button>
+            <button id="step-btn">ステップ実行</button>
+        </div>
+        
+        <div class="status" id="status"></div>
+        
+        <div class="visualization">
+            <div id="algorithm-steps">
+                <div class="algorithm-step" id="step-1">1. 判定対象の数値 N を設定する</div>
+                <div class="algorithm-step" id="step-2">2. N が 1 以下であれば、素数ではないと判定して終了</div>
+                <div class="algorithm-step" id="step-3">3. N が 2 または 3 であれば、素数と判定して終了</div>
+                <div class="algorithm-step" id="step-4">4. N が 2 で割り切れる場合、素数ではないと判定して終了</div>
+                <div class="algorithm-step" id="step-5">5. 3 から √N まで、2 ずつ増加させた数値 i で以下を実施:</div>
+                <div class="algorithm-step" id="step-5-1" style="margin-left: 20px;">- N が i で割り切れる場合、素数ではないと判定して終了</div>
+                <div class="algorithm-step" id="step-6">6. ここまで到達した場合、N は素数と判定して終了</div>
+            </div>
+            
+            <div class="algorithm-explanation" id="explanation"></div>
+            
+            <div class="number-line" id="number-line"></div>
+            
+            <div class="conclusion" id="conclusion"></div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const numberInput = document.getElementById('number');
+            const checkBtn = document.getElementById('check-btn');
+            const clearBtn = document.getElementById('clear-btn');
+            const animationBtn = document.getElementById('animation-btn');
+            const stepBtn = document.getElementById('step-btn');
+            const status = document.getElementById('status');
+            const explanation = document.getElementById('explanation');
+            const numberLine = document.getElementById('number-line');
+            const conclusion = document.getElementById('conclusion');
+            
+            let currentStep = 0;
+            let animationRunning = false;
+            let animationInterval;
+            let numToCheck = 0;
+            let currentDivisor = 0;
+            let sqrtN = 0;
+            let divisorList = [];
+            
+            function resetAnimation() {
+                currentStep = 0;
+                animationRunning = false;
+                clearInterval(animationInterval);
+                animationBtn.textContent = "アニメーション実行/停止";
+                stepBtn.disabled = false;
+                checkBtn.disabled = false;
+                status.textContent = "";
+                explanation.textContent = "";
+                numberLine.innerHTML = "";
+                conclusion.style.display = "none";
+                
+                document.querySelectorAll('.algorithm-step').forEach(step => {
+                    step.classList.remove('active-step', 'completed-step', 'failed-step');
+                });
+            }
+            
+            function startPrimeCheck() {
+                resetAnimation();
+                numToCheck = parseInt(numberInput.value);
+                sqrtN = Math.sqrt(numToCheck);
+                divisorList = [];
+                
+                // 2 から sqrt(N) までの割り切れる可能性のある数を計算
+                if (numToCheck > 2) {
+                    divisorList.push(2);
+                    for (let i = 3; i <= sqrtN; i += 2) {
+                        divisorList.push(i);
+                    }
+                }
+                
+                status.textContent = `数値 ${numToCheck} の素数判定を開始します`;
+                stepBtn.disabled = false;
+                checkBtn.disabled = true;
+                
+                renderNumberLine();
+            }
+            
+            function renderNumberLine() {
+                numberLine.innerHTML = "";
+                if (divisorList.length === 0) return;
+                
+                divisorList.forEach(divisor => {
+                    const divisorEl = document.createElement('div');
+                    divisorEl.className = 'divisor';
+                    divisorEl.id = `divisor-${divisor}`;
+                    divisorEl.textContent = divisor;
+                    numberLine.appendChild(divisorEl);
+                });
+            }
+            
+            function highlightStep(stepId, type = 'active') {
+                const step = document.getElementById(stepId);
+                
+                document.querySelectorAll('.algorithm-step').forEach(s => {
+                    s.classList.remove('active-step');
+                });
+                
+                if (type === 'active') {
+                    step.classList.add('active-step');
+                } else if (type === 'completed') {
+                    step.classList.remove('active-step');
+                    step.classList.add('completed-step');
+                } else if (type === 'failed') {
+                    step.classList.remove('active-step');
+                    step.classList.add('failed-step');
+                }
+            }
+            
+            function executeNextStep() {
+                currentStep++;
+                
+                switch (currentStep) {
+                    case 1:
+                        highlightStep('step-1');
+                        explanation.textContent = `判定対象の数値 N = ${numToCheck} を設定しました。`;
+                        break;
+                        
+                    case 2:
+                        highlightStep('step-1', 'completed');
+                        highlightStep('step-2');
+                        if (numToCheck <= 1) {
+                            explanation.textContent = `N = ${numToCheck} は 1 以下なので、素数ではありません。`;
+                            conclusion.textContent = `${numToCheck} は素数ではありません。`;
+                            conclusion.className = 'conclusion not-prime';
+                            conclusion.style.display = 'block';
+                            highlightStep('step-2', 'failed');
+                            endAnimation();
+                            return;
+                        }
+                        explanation.textContent = `N = ${numToCheck} は 1 より大きいので、次のステップに進みます。`;
+                        break;
+                        
+                    case 3:
+                        highlightStep('step-2', 'completed');
+                        highlightStep('step-3');
+                        if (numToCheck === 2 || numToCheck === 3) {
+                            explanation.textContent = `N = ${numToCheck} は ${numToCheck} なので、素数です。`;
+                            conclusion.textContent = `${numToCheck} は素数です。`;
+                            conclusion.className = 'conclusion is-prime';
+                            conclusion.style.display = 'block';
+                            highlightStep('step-3', 'completed');
+                            endAnimation();
+                            return;
+                        }
+                        explanation.textContent = `N = ${numToCheck} は 2 でも 3 でもないので、次のステップに進みます。`;
+                        break;
+                        
+                    case 4:
+                        highlightStep('step-3', 'completed');
+                        highlightStep('step-4');
+                        const divisor2 = document.getElementById('divisor-2');
+                        if (divisor2) divisor2.classList.add('current-divisor');
+                        
+                        if (numToCheck % 2 === 0) {
+                            explanation.textContent = `N = ${numToCheck} は 2 で割り切れるので (${numToCheck} ÷ 2 = ${numToCheck / 2})、素数ではありません。`;
+                            if (divisor2) divisor2.classList.add('divisible');
+                            conclusion.textContent = `${numToCheck} は素数ではありません。`;
+                            conclusion.className = 'conclusion not-prime';
+                            conclusion.style.display = 'block';
+                            highlightStep('step-4', 'failed');
+                            endAnimation();
+                            return;
+                        }
+                        explanation.textContent = `N = ${numToCheck} は 2 で割り切れないので、次のステップに進みます。`;
+                        if (divisor2) divisor2.classList.add('not-divisible');
+                        break;
+                        
+                    case 5:
+                        highlightStep('step-4', 'completed');
+                        highlightStep('step-5');
+                        explanation.textContent = `次は 3 から √${numToCheck} (≒ ${sqrtN.toFixed(2)}) までの奇数で割っていきます。`;
+                        currentDivisor = 1; // 次のステップで 3 になるように
+                        break;
+                        
+                    default:
+                        if (currentStep === 6) {
+                            highlightStep('step-5', 'completed');
+                        }
+                        
+                        // ここからは各除数での割り算のステップ
+                        currentDivisor += 2;
+                        const currentDivisorEl = document.getElementById(`divisor-${currentDivisor}`);
+                        
+                        if (currentDivisorEl) {
+                            // 前のdivisorのcurrent-divisorクラスを削除
+                            document.querySelectorAll('.current-divisor').forEach(el => {
+                                el.classList.remove('current-divisor');
+                            });
+                            
+                            currentDivisorEl.classList.add('current-divisor');
+                        }
+                        
+                        highlightStep('step-5-1');
+                        
+                        if (currentDivisor > sqrtN) {
+                            // すべての除数をチェックし終えた
+                            highlightStep('step-5-1', 'completed');
+                            highlightStep('step-6');
+                            explanation.textContent = `√${numToCheck} (≒ ${sqrtN.toFixed(2)}) までのすべての数で割り切れなかったので、${numToCheck} は素数です。`;
+                            conclusion.textContent = `${numToCheck} は素数です。`;
+                            conclusion.className = 'conclusion is-prime';
+                            conclusion.style.display = 'block';
+                            highlightStep('step-6', 'completed');
+                            endAnimation();
+                            return;
+                        }
+                        
+                        if (numToCheck % currentDivisor === 0) {
+                            explanation.textContent = `N = ${numToCheck} は ${currentDivisor} で割り切れるので (${numToCheck} ÷ ${currentDivisor} = ${numToCheck / currentDivisor})、素数ではありません。`;
+                            if (currentDivisorEl) currentDivisorEl.classList.add('divisible');
+                            conclusion.textContent = `${numToCheck} は素数ではありません。`;
+                            conclusion.className = 'conclusion not-prime';
+                            conclusion.style.display = 'block';
+                            highlightStep('step-5-1', 'failed');
+                            endAnimation();
+                            return;
+                        }
+                        
+                        explanation.textContent = `N = ${numToCheck} は ${currentDivisor} で割り切れないので、次の除数に進みます。`;
+                        if (currentDivisorEl) currentDivisorEl.classList.add('not-divisible');
+                        break;
+                }
+            }
+            
+            function toggleAnimation() {
+                if (animationRunning) {
+                    clearInterval(animationInterval);
+                    animationRunning = false;
+                    animationBtn.textContent = 'アニメーション実行/停止';
+                } else {
+                    animationRunning = true;
+                    animationBtn.textContent = 'アニメーション停止';
+                    animationInterval = setInterval(() => {
+                        executeNextStep();
+                    }, 1000);
+                }
+            }
+            
+            function endAnimation() {
+                clearInterval(animationInterval);
+                animationRunning = false;
+                animationBtn.textContent = 'アニメーション実行/停止';
+                stepBtn.disabled = true;
+                animationBtn.disabled = true;
+            }
+            
+            checkBtn.addEventListener('click', startPrimeCheck);
+            
+            clearBtn.addEventListener('click', () => {
+                resetAnimation();
+            });
+            
+            animationBtn.addEventListener('click', () => {
+                if (currentStep === 0) {
+                    startPrimeCheck();
+                }
+                toggleAnimation();
+            });
+            
+            stepBtn.addEventListener('click', () => {
+                if (currentStep === 0) {
+                    startPrimeCheck();
+                }
+                executeNextStep();
+            });
+            
+            // 初期状態の設定
+            resetAnimation();
+        });
+    </script>
+</body>
+</html>

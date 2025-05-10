@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>グラフの最小全域木問題</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="./../styles.css">
+</head>
+<body>
+    <div class="container">
+        <h1>グラフの最小全域木問題</h1>
+
+        <div class="section">
+            <h2>問題の概要</h2>
+            <p>グラフの最小全域木（Minimum Spanning Tree, MST）とは、無向グラフGのすべての頂点を含み、辺の重みの合計が最小になる木構造（閉路を持たない連結部分グラフ）です。つまり、与えられたグラフの全ての点を最小コストで接続するための経路を求める問題です。</p>
+            <p>この問題は、通信ネットワーク、道路網、電気回路など、最小コストでノード間を接続する必要がある多くの実世界の応用があります。例えば：</p>
+            <ul>
+                <li>最小コストでの通信ネットワークの構築</li>
+                <li>都市間の道路網の最適設計</li>
+                <li>クラスタリングアルゴリズムの一部として</li>
+                <li>電力網や水道網などのインフラ設計</li>
+            </ul>
+            <p>
+                最小全域木の性質として：
+            </p>
+            <ul>
+                <li>n個の頂点を持つグラフの全域木は必ず(n-1)個の辺を持ちます</li>
+                <li>グラフが連結であれば、少なくとも1つの最小全域木が存在します</li>
+                <li>辺の重みがすべて異なる場合、最小全域木は一意に決まります</li>
+            </ul>    
+        </div>
+
+        <div class="section">
+            <h2>図解</h2>
+            <canvas id="mstCanvas" width="950" height="400"></canvas>    
+        </div>
+
+        <div class="section">
+            <h2>アルゴリズム</h2>
+            <ul>
+                <li><a href="./prims/"><i class="fas fa-external-link-alt"></i> プリム法</a></li>
+                <li><a href="./prims/"><i class="fas fa-external-link-alt"></i> クラスカル法</a></li>
+            </ul>
+        </div>
+
+        <div class="section">
+            <h2>アルゴリズム比較表</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>アルゴリズム</th>
+                        <th>平均計算量</th>
+                        <th>長所</th>
+                        <th>短所</th>
+                        <th>適用ケース</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>プリム法<br/>(Prim)</strong></td>
+                        <td>O(E log V)</td>
+                        <td>
+                            <ul>
+                                <li>密グラフに効率的</li>
+                                <li>実装がシンプル</li>
+                                <li>単一の開始点から成長</li>
+                            </ul>
+                        </td>
+                        <td>
+                            <ul>
+                                <li>疎グラフでは非効率的</li>
+                                <li>分散処理に向かない</li>
+                            </ul>
+                        </td>
+                        <td>密なグラフ (|E| ≈ |V|²)</td>
+                    </tr>
+                    <tr>
+                        <td><strong>クラスカル法<br/>(Kruskal)</strong></td>
+                        <td>O(E log E)</td>
+                        <td>
+                            <ul>
+                                <li>疎グラフに効率的</li>
+                                <li>複数の部分木から同時に成長</li>
+                                <li>辺が少ない場合に高速</li>
+                            </ul>
+                        </td>
+                        <td>
+                            <ul>
+                                <li>Union-Findデータ構造が必要</li>
+                                <li>密グラフではプリム法より遅い場合がある</li>
+                            </ul>
+                        </td>
+                        <td>疎なグラフ (|E| ≪ |V|²)</td>
+                    </tr>
+                    <tr>
+                        <td><strong>ブルーフカ法<br/>(Borůvka)</strong></td>
+                        <td>O(E log V)</td>
+                        <td>
+                            <ul>
+                                <li>並列処理に適している</li>
+                                <li>複数の成長点から同時に進行</li>
+                                <li>歴史的に最初のMSTアルゴリズム</li>
+                            </ul>
+                        </td>
+                        <td>
+                            <ul>
+                                <li>実装が複雑</li>
+                                <li>一般的に使用頻度が低い</li>
+                            </ul>
+                        </td>
+                        <td>並列処理が必要な大規模グラフ</td>
+                    </tr>
+                    <tr>
+                        <td><strong>逆削除法<br/>(Reverse-Delete)</strong></td>
+                        <td>O(E log E (log log V))</td>
+                        <td>
+                            <ul>
+                                <li>クラスカル法の双対</li>
+                                <li>重い辺から順に削除</li>
+                                <li>特定のケースで有効</li>
+                            </ul>
+                        </td>
+                        <td>
+                            <ul>
+                                <li>連結性チェックの計算コストが高い</li>
+                                <li>実装が複雑</li>
+                                <li>他の方法より一般的に遅い</li>
+                            </ul>
+                        </td>
+                        <td>特殊なケースや理論的分析</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // キャンバスの設定
+            const canvas = document.getElementById('mstCanvas');
+            const ctx = canvas.getContext('2d');
+            const width = canvas.width;
+            const height = canvas.height;
+            
+            // グラフ描画のためのパラメータ
+            const nodeRadius = 20;
+            const fontSize = 16;
+            
+            // 頂点と辺の定義
+            const nodes = [
+                { id: 'A', x: 100, y: 100 },
+                { id: 'B', x: 250, y: 50 },
+                { id: 'C', x: 400, y: 100 },
+                { id: 'D', x: 100, y: 250 },
+                { id: 'E', x: 250, y: 200 },
+                { id: 'F', x: 400, y: 250 },
+                { id: 'G', x: 550, y: 150 }
+            ];
+            
+            const edges = [
+                { from: 'A', to: 'B', weight: 7 },
+                { from: 'A', to: 'D', weight: 5 },
+                { from: 'B', to: 'C', weight: 8 },
+                { from: 'B', to: 'E', weight: 7 },
+                { from: 'C', to: 'E', weight: 5 },
+                { from: 'C', to: 'G', weight: 9 },
+                { from: 'D', to: 'E', weight: 15 },
+                { from: 'D', to: 'F', weight: 6 },
+                { from: 'E', to: 'F', weight: 8 },
+                { from: 'F', to: 'G', weight: 11 }
+            ];
+            
+            // MST（最小全域木）の辺 - クラスカル法などで計算される結果
+            const mstEdges = [
+                { from: 'A', to: 'D', weight: 5 },
+                { from: 'C', to: 'E', weight: 5 },
+                { from: 'D', to: 'F', weight: 6 },
+                { from: 'A', to: 'B', weight: 7 },
+                { from: 'B', to: 'E', weight: 7 },
+                { from: 'C', to: 'G', weight: 9 }
+            ];
+            
+            // 辺の描画関数
+            function drawEdge(fromNode, toNode, weight, isMST = false) {
+                ctx.beginPath();
+                ctx.moveTo(fromNode.x, fromNode.y);
+                ctx.lineTo(toNode.x, toNode.y);
+                
+                if (isMST) {
+                    ctx.strokeStyle = '#e74c3c';
+                    ctx.lineWidth = 3;
+                } else {
+                    ctx.strokeStyle = '#bdc3c7';
+                    ctx.lineWidth = 1;
+                }
+                
+                ctx.stroke();
+                
+                // 辺の重みを表示
+                const midX = (fromNode.x + toNode.x) / 2;
+                const midY = (fromNode.y + toNode.y) / 2;
+                
+                ctx.fillStyle = isMST ? '#e74c3c' : '#7f8c8d';
+                ctx.font = `${fontSize}px Arial`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                
+                // 重みの背景
+                ctx.fillStyle = 'white';
+                ctx.fillRect(midX - 12, midY - 12, 24, 24);
+                
+                // 重みの表示
+                ctx.fillStyle = isMST ? '#e74c3c' : '#7f8c8d';
+                ctx.fillText(weight, midX, midY);
+            }
+            
+            // ノードの描画関数
+            function drawNode(node) {
+                ctx.beginPath();
+                ctx.arc(node.x, node.y, nodeRadius, 0, Math.PI * 2);
+                ctx.fillStyle = '#3498db';
+                ctx.fill();
+                
+                ctx.fillStyle = 'white';
+                ctx.font = `${fontSize}px Arial`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(node.id, node.x, node.y);
+            }
+            
+            // グラフとMSTを描画
+            function drawGraph() {
+                ctx.clearRect(0, 0, width, height);
+                
+                // 左側：全体のグラフを描画
+                ctx.save();
+                ctx.translate(0, 0);
+                
+                // 先に全ての辺を描画
+                edges.forEach(edge => {
+                    const fromNode = nodes.find(n => n.id === edge.from);
+                    const toNode = nodes.find(n => n.id === edge.to);
+                    drawEdge(fromNode, toNode, edge.weight, false);
+                });
+                
+                // 全てのノードを描画
+                nodes.forEach(node => {
+                    drawNode(node);
+                });
+                
+                // タイトルを表示
+                ctx.fillStyle = '#2c3e50';
+                ctx.font = '16px Arial';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'top';
+                ctx.fillText('元のグラフ', width / 4, 20);
+                
+                ctx.restore();
+                
+                // 右側：MST（最小全域木）を描画
+                ctx.save();
+                ctx.translate(width / 2, 0);
+                
+                // MSTの辺を描画
+                mstEdges.forEach(edge => {
+                    const fromNode = nodes.find(n => n.id === edge.from);
+                    const toNode = nodes.find(n => n.id === edge.to);
+                    drawEdge(fromNode, toNode, edge.weight, true);
+                });
+                
+                // 全てのノードを描画
+                nodes.forEach(node => {
+                    drawNode(node);
+                });
+                
+                // MST情報を表示
+                ctx.fillStyle = '#2c3e50';
+                ctx.font = '16px Arial';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'top';
+                ctx.fillText('最小全域木 (MST) - 総コスト: 39', width / 4, 20);
+                
+                ctx.restore();
+                
+                // アルゴリズムのステップ説明
+                ctx.fillStyle = '#2c3e50';
+                ctx.font = '14px Arial';
+                ctx.textAlign = 'left';
+                ctx.textBaseline = 'top';
+                ctx.fillText('1. 最小全域木は元のグラフの全ての頂点を含み、辺の重みの合計が最小になる木構造です', 20, height - 80);
+                ctx.fillText('2. グラフから閉路を削除し、全ての頂点が最小コストで接続されるように辺を選択します', 20, height - 60);
+                ctx.fillText('3. n個の頂点に対して、最小全域木は常に(n-1)個の辺を持ちます', 20, height - 40);
+            }
+            
+            // グラフを描画する
+            drawGraph();
+        });
+    </script>
+</body>
+</html>

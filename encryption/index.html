@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>暗号化nの問題</title>
+    <link rel="stylesheet" href="./../styles.css">
+</head>
+<body>
+    <div class="container">
+        <h1>暗号化の問題</h1>
+        
+        <div class="section">
+            <h2>問題の概要</h2>
+            <p>暗号化はデータのセキュリティを確保するための重要な技術であり、さまざまなアルゴリズムが存在します。各アルゴリズムには固有の特性があり、用途に応じて最適なものを選択する必要があります。</p>
+            <p>主な課題は以下の通りです：</p>
+            <ul>
+                <li>データの機密性・完全性・真正性の確保</li>
+                <li>処理速度とセキュリティレベルのバランス</li>
+                <li>計算リソースの制約への対応</li>
+                <li>量子コンピュータなどの新技術に対する耐性</li>
+                <li>標準規格との互換性およびコンプライアンス</li>
+            </ul>
+        </div>
+
+        <div class="section">
+            <h2>アルゴリズム比較表</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>アルゴリズム</th>
+                        <th>種類</th>
+                        <th>平均計算量</th>
+                        <th>長所</th>
+                        <th>短所</th>
+                        <th>適用ケース</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>RSA</strong></td>
+                        <td>非対称暗号</td>
+                        <td>O(k³)</td>
+                        <td>
+                            <ul>
+                                <li>広く採用されている</li>
+                                <li>鍵配送問題を解決</li>
+                                <li>デジタル署名に適している</li>
+                            </ul>
+                        </td>
+                        <td>
+                            <ul>
+                                <li>計算コストが高い</li>
+                                <li>大きな鍵サイズが必要</li>
+                                <li>量子コンピュータに弱い</li>
+                            </ul>
+                        </td>
+                        <td>
+                            <ul>
+                                <li>SSL/TLS</li>
+                                <li>セキュアな通信の確立</li>
+                                <li>デジタル署名</li>
+                                <li>セキュリティ証明書</li>
+                            </ul>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><strong>AES</strong></td>
+                        <td>対称暗号</td>
+                        <td>O(n)</td>
+                        <td>
+                            <ul>
+                                <li>高速処理</li>
+                                <li>優れたセキュリティ</li>
+                                <li>標準化されている</li>
+                                <li>ハードウェア実装に適している</li>
+                            </ul>
+                        </td>
+                        <td>
+                            <ul>
+                                <li>鍵配送問題がある</li>
+                                <li>安全な鍵管理が必要</li>
+                            </ul>
+                        </td>
+                        <td>
+                            <ul>
+                                <li>大量データの暗号化</li>
+                                <li>ファイル暗号化</li>
+                                <li>VPN</li>
+                                <li>リアルタイム通信</li>
+                            </ul>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><strong>DES</strong></td>
+                        <td>対称暗号</td>
+                        <td>O(n)</td>
+                        <td>
+                            <ul>
+                                <li>実装が簡単</li>
+                                <li>歴史的に広く研究されている</li>
+                            </ul>
+                        </td>
+                        <td>
+                            <ul>
+                                <li>鍵長が短い（56ビット）</li>
+                                <li>ブルートフォース攻撃に弱い</li>
+                                <li>現代的な用途では安全でない</li>
+                            </ul>
+                        </td>
+                        <td>
+                            <ul>
+                                <li>レガシーシステム</li>
+                                <li>Triple DESとして一部使用</li>
+                                <li>現代のシステムでは非推奨</li>
+                            </ul>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><strong>ECC</strong></td>
+                        <td>非対称暗号</td>
+                        <td>O(k³)</td>
+                        <td>
+                            <ul>
+                                <li>RSAより小さい鍵サイズで同等のセキュリティ</li>
+                                <li>低リソース環境に適している</li>
+                                <li>効率的な計算処理</li>
+                            </ul>
+                        </td>
+                        <td>
+                            <ul>
+                                <li>実装が複雑</li>
+                                <li>一部の特許問題（地域による）</li>
+                                <li>RSAに比べて普及度が低い</li>
+                            </ul>
+                        </td>
+                        <td>
+                            <ul>
+                                <li>IoTデバイス</li>
+                                <li>スマートカード</li>
+                                <li>モバイルデバイス</li>
+                                <li>リソース制約のある環境</li>
+                            </ul>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</body>
+</html>

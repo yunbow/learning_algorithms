@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>グラフの最短経路問題</title>
+    <link rel="stylesheet" href="./../styles.css">
+</head>
+<body>
+    <div class="container">
+        <h1>グラフの最短経路問題</h1>
+
+        <div class="section">
+            <h2>問題の概要</h2>
+            <p>グラフの最短経路問題とは、重み付きグラフにおいて、与えられた始点から終点までの経路のうち、辺の重みの合計が最小となる経路（最短経路）を求める問題です。実世界では、道路網におけるナビゲーション、ネットワークのルーティング、ロボット経路計画など様々な分野で応用されています。</p>        
+            <p>最短経路問題には、以下のようなバリエーションがあります：</p>
+            <ul>
+                <li>単一始点最短経路問題：一つの始点から他のすべての頂点への最短経路を求める</li>
+                <li>単一対最短経路問題：特定の2頂点間の最短経路を求める</li>
+                <li>全点対最短経路問題：グラフ内のすべての頂点ペア間の最短経路を求める</li>
+            </ul>
+            <p>課題としては、グラフのサイズ（頂点数や辺数）が増加すると計算量が増大することや、負の重みを持つ辺が存在する場合や、負の閉路（サイクル）がある場合の処理などが挙げられます。それぞれの状況に適したアルゴリズムを選択することが重要です。</p>        
+        </div>
+
+        <div class="section">
+            <h2>アルゴリズム比較表</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>アルゴリズム</th>
+                        <th>計算量</th>
+                        <th>長所</th>
+                        <th>短所</th>
+                        <th>適用ケース</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>ダイクストラ法<br/>(Dijkstra's Algorithm)</strong></td>
+                        <td>O(E + V log V)</td>
+                        <td>
+                            <ul>
+                                <li>効率的で実装が比較的容易</li>
+                                <li>優先度キューを用いた実装が速い</li>
+                                <li>実用的なアプリケーションに広く使われている</li>
+                            </ul>
+                        </td>
+                        <td>
+                            <ul>
+                                <li>負の重みを持つ辺には対応できない</li>
+                                <li>全頂点間の最短経路計算には非効率</li>
+                            </ul>
+                        </td>
+                        <td>
+                            <ul>
+                                <li>カーナビゲーション</li>
+                                <li>ネットワークルーティング</li>
+                                <li>正の重みのみのグラフ</li>
+                            </ul>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><strong>ベルマン-フォード法<br/>(Bellman-Ford Algorithm)</strong></td>
+                        <td>O(V × E)</td>
+                        <td>
+                            <ul>
+                                <li>負の重みを持つ辺に対応可能</li>
+                                <li>負の閉路を検出できる</li>
+                                <li>実装が比較的簡単</li>
+                            </ul>
+                        </td>
+                        <td>
+                            <ul>
+                                <li>ダイクストラ法より遅い</li>
+                                <li>大規模グラフでは非効率</li>
+                            </ul>
+                        </td>
+                        <td>
+                            <ul>
+                                <li>負の重みを持つグラフ</li>
+                                <li>為替レート計算</li>
+                                <li>負の閉路検出が必要な場合</li>
+                            </ul>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><strong>ワーシャル-フロイド法<br/>(Floyd-Warshall Algorithm)</strong></td>
+                        <td>O(V³)</td>
+                        <td>
+                            <ul>
+                                <li>全点対の最短経路を一度に計算</li>
+                                <li>実装が非常に簡単</li>
+                                <li>負の重みを持つ辺に対応可能</li>
+                            </ul>
+                        </td>
+                        <td>
+                            <ul>
+                                <li>大規模グラフでは非効率（V³の計算量）</li>
+                                <li>メモリ使用量が多い（V²）</li>
+                            </ul>
+                        </td>
+                        <td>
+                            <ul>
+                                <li>小～中規模の密なグラフ</li>
+                                <li>全頂点間の距離が必要な場合</li>
+                                <li>中継点情報が必要な場合</li>
+                            </ul>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><strong>A*アルゴリズム<br/>(A* Algorithm)</strong></td>
+                        <td>O(E)</td>
+                        <td>
+                            <ul>
+                                <li>ヒューリスティック関数で探索を効率化</li>
+                                <li>多くの場合、ダイクストラ法より効率的</li>
+                                <li>目標指向の経路探索に最適</li>
+                            </ul>
+                        </td>
+                        <td>
+                            <ul>
+                                <li>適切なヒューリスティック関数の設計が必要</li>
+                                <li>メモリ消費量が多い場合がある</li>
+                                <li>全点対の計算には向かない</li>
+                            </ul>
+                        </td>
+                        <td>
+                            <ul>
+                                <li>ゲームのパス検索</li>
+                                <li>ロボット経路計画</li>
+                                <li>目的地が明確で位置情報がある場合</li>
+                            </ul>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><strong>SPFA<br/>(Shortest Path Faster Algorithm)</strong></td>
+                        <td>平均 O(E)、最悪 O(V × E)</td>
+                        <td>
+                            <ul>
+                                <li>ベルマン-フォード法の最適化版</li>
+                                <li>平均的なケースでは高速</li>
+                                <li>負の重みを持つ辺に対応可能</li>
+                            </ul>
+                        </td>
+                        <td>
+                            <ul>
+                                <li>最悪ケースではベルマン-フォード法と同等</li>
+                                <li>特定のグラフでは非効率になることがある</li>
+                            </ul>
+                        </td>
+                        <td>
+                            <ul>
+                                <li>負の重みを含むグラフ</li>
+                                <li>疎なグラフでの単一始点最短経路</li>
+                                <li>競技プログラミング</li>
+                            </ul>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</body>
+</html>
