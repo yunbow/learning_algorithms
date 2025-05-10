@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>最大公約数の問題</title>
+    <link rel="stylesheet" href="./../styles.css">
+</head>
+<body>
+    <h1>最大公約数の問題</h1>
+    <div class="section">
+        <h2>問題の概要</h2>
+        <p>最大公約数（Greatest Common Divisor: GCD）とは、2つ以上の整数が共通して持つ約数のうち最大のものを指します。例えば、12と18の最大公約数は6です。</p>
+        <p>最大公約数を求める問題は、数論における基本的な問題であり、暗号理論、有理数の既約分数表現、モジュラ逆数の計算など、様々な応用があります。</p>
+        <p>この問題に対しては複数のアルゴリズムが開発されていますが、特にユークリッドの互除法とバイナリGCDアルゴリズムは効率的な解法として知られています。</p>
+        <p>課題としては、大きな数値や多数のGCD計算が必要な場合における効率的な計算方法の選択があります。また、特定のハードウェア環境や制約条件に応じて、最適なアルゴリズムを選択する必要があります。</p>
+    </div>
+
+    <div class="section">
+        <h2>アルゴリズム</h2>
+        <ul>
+            <li>ユークリッドの互除法 (<a href="./euclidean/">説明</a>) (<a href=".//">ソースコード</a>)</li>
+            <li>バイナリGCDアルゴリズム</li>
+        </ul>
+    </div>
+
+    <div class="section">
+        <h2>アルゴリズム比較表</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>アルゴリズム</th>
+                    <th>平均計算量</th>
+                    <th>長所</th>
+                    <th>短所</th>
+                    <th>適用ケース</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>ユークリッドの互除法</strong></td>
+                    <td>O(log(min(a,b)))</td>
+                    <td>
+                        <ul>
+                            <li>実装が単純</li>
+                            <li>数学的に理解しやすい</li>
+                            <li>多くの言語で標準的なGCD実装として採用</li>
+                        </ul>
+                    </td>
+                    <td>
+                        <ul>
+                            <li>除算操作はコストが高い</li>
+                            <li>大きな数での除算は遅くなる可能性がある</li>
+                        </ul>
+                    </td>
+                    <td>
+                        <ul>
+                            <li>一般的なGCD計算</li>
+                            <li>中程度の大きさの整数</li>
+                            <li>除算が比較的高速な環境</li>
+                        </ul>
+                    </td>
+                </tr>
+                <tr>
+                    <td><strong>バイナリGCDアルゴリズム<br>(Stein's Algorithm)</strong></td>
+                    <td>O(log(a) * log(b))</td>
+                    <td>
+                        <ul>
+                            <li>除算操作を使用しない</li>
+                            <li>シフト操作のみで計算可能</li>
+                            <li>ハードウェアレベルで効率的</li>
+                        </ul>
+                    </td>
+                    <td>
+                        <ul>
+                            <li>実装がやや複雑</li>
+                            <li>特定のケースではユークリッドより多くのステップが必要</li>
+                        </ul>
+                    </td>
+                    <td>
+                        <ul>
+                            <li>除算が遅い環境</li>
+                            <li>非常に大きな整数</li>
+                            <li>組み込みシステムや低レベル実装</li>
+                            <li>ビット操作が効率的な環境</li>
+                        </ul>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>
