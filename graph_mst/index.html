@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>グラフの最小全域木問題</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" href="./../styles.css">
 </head>
 <body>
@@ -37,23 +36,10 @@
         </div>
 
         <div class="section">
-            <h2>図解</h2>
-            <canvas id="mstCanvas" width="950" height="400"></canvas>    
-        </div>
-
-        <div class="section">
             <h2>アルゴリズム</h2>
             <ul>
                 <li><a href="./prims/">プリム法 (Prim)</a> (<a href="https://github.com/yunbow/learning_algorithms/tree/main/graph_mst/prims/src/" target="_blank">ソースコード</a>)</li>
                 <li><a href="./kruskal/">クラスカル法 (Kruskal)</a> (<a href="https://github.com/yunbow/learning_algorithms/tree/main/graph_mst/kruskal/src/" target="_blank">ソースコード</a>)</li>
-            </ul>
-        </div>
-
-        <div class="section">
-            <h2>アルゴリズム</h2>
-            <ul>
-                <li><a href="./prims/"><i class="fas fa-external-link-alt"></i> プリム法</a></li>
-                <li><a href="./prims/"><i class="fas fa-external-link-alt"></i> クラスカル法</a></li>
             </ul>
         </div>
 
@@ -147,168 +133,5 @@
             </table>
         </div>
     </div>
-
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // キャンバスの設定
-            const canvas = document.getElementById('mstCanvas');
-            const ctx = canvas.getContext('2d');
-            const width = canvas.width;
-            const height = canvas.height;
-            
-            // グラフ描画のためのパラメータ
-            const nodeRadius = 20;
-            const fontSize = 16;
-            
-            // 頂点と辺の定義
-            const nodes = [
-                { id: 'A', x: 100, y: 100 },
-                { id: 'B', x: 250, y: 50 },
-                { id: 'C', x: 400, y: 100 },
-                { id: 'D', x: 100, y: 250 },
-                { id: 'E', x: 250, y: 200 },
-                { id: 'F', x: 400, y: 250 },
-                { id: 'G', x: 550, y: 150 }
-            ];
-            
-            const edges = [
-                { from: 'A', to: 'B', weight: 7 },
-                { from: 'A', to: 'D', weight: 5 },
-                { from: 'B', to: 'C', weight: 8 },
-                { from: 'B', to: 'E', weight: 7 },
-                { from: 'C', to: 'E', weight: 5 },
-                { from: 'C', to: 'G', weight: 9 },
-                { from: 'D', to: 'E', weight: 15 },
-                { from: 'D', to: 'F', weight: 6 },
-                { from: 'E', to: 'F', weight: 8 },
-                { from: 'F', to: 'G', weight: 11 }
-            ];
-            
-            // MST（最小全域木）の辺 - クラスカル法などで計算される結果
-            const mstEdges = [
-                { from: 'A', to: 'D', weight: 5 },
-                { from: 'C', to: 'E', weight: 5 },
-                { from: 'D', to: 'F', weight: 6 },
-                { from: 'A', to: 'B', weight: 7 },
-                { from: 'B', to: 'E', weight: 7 },
-                { from: 'C', to: 'G', weight: 9 }
-            ];
-            
-            // 辺の描画関数
-            function drawEdge(fromNode, toNode, weight, isMST = false) {
-                ctx.beginPath();
-                ctx.moveTo(fromNode.x, fromNode.y);
-                ctx.lineTo(toNode.x, toNode.y);
-                
-                if (isMST) {
-                    ctx.strokeStyle = '#e74c3c';
-                    ctx.lineWidth = 3;
-                } else {
-                    ctx.strokeStyle = '#bdc3c7';
-                    ctx.lineWidth = 1;
-                }
-                
-                ctx.stroke();
-                
-                // 辺の重みを表示
-                const midX = (fromNode.x + toNode.x) / 2;
-                const midY = (fromNode.y + toNode.y) / 2;
-                
-                ctx.fillStyle = isMST ? '#e74c3c' : '#7f8c8d';
-                ctx.font = `${fontSize}px Arial`;
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'middle';
-                
-                // 重みの背景
-                ctx.fillStyle = 'white';
-                ctx.fillRect(midX - 12, midY - 12, 24, 24);
-                
-                // 重みの表示
-                ctx.fillStyle = isMST ? '#e74c3c' : '#7f8c8d';
-                ctx.fillText(weight, midX, midY);
-            }
-            
-            // ノードの描画関数
-            function drawNode(node) {
-                ctx.beginPath();
-                ctx.arc(node.x, node.y, nodeRadius, 0, Math.PI * 2);
-                ctx.fillStyle = '#3498db';
-                ctx.fill();
-                
-                ctx.fillStyle = 'white';
-                ctx.font = `${fontSize}px Arial`;
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'middle';
-                ctx.fillText(node.id, node.x, node.y);
-            }
-            
-            // グラフとMSTを描画
-            function drawGraph() {
-                ctx.clearRect(0, 0, width, height);
-                
-                // 左側：全体のグラフを描画
-                ctx.save();
-                ctx.translate(0, 0);
-                
-                // 先に全ての辺を描画
-                edges.forEach(edge => {
-                    const fromNode = nodes.find(n => n.id === edge.from);
-                    const toNode = nodes.find(n => n.id === edge.to);
-                    drawEdge(fromNode, toNode, edge.weight, false);
-                });
-                
-                // 全てのノードを描画
-                nodes.forEach(node => {
-                    drawNode(node);
-                });
-                
-                // タイトルを表示
-                ctx.fillStyle = '#2c3e50';
-                ctx.font = '16px Arial';
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'top';
-                ctx.fillText('元のグラフ', width / 4, 20);
-                
-                ctx.restore();
-                
-                // 右側：MST（最小全域木）を描画
-                ctx.save();
-                ctx.translate(width / 2, 0);
-                
-                // MSTの辺を描画
-                mstEdges.forEach(edge => {
-                    const fromNode = nodes.find(n => n.id === edge.from);
-                    const toNode = nodes.find(n => n.id === edge.to);
-                    drawEdge(fromNode, toNode, edge.weight, true);
-                });
-                
-                // 全てのノードを描画
-                nodes.forEach(node => {
-                    drawNode(node);
-                });
-                
-                // MST情報を表示
-                ctx.fillStyle = '#2c3e50';
-                ctx.font = '16px Arial';
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'top';
-                ctx.fillText('最小全域木 (MST) - 総コスト: 39', width / 4, 20);
-                
-                ctx.restore();
-                
-                // アルゴリズムのステップ説明
-                ctx.fillStyle = '#2c3e50';
-                ctx.font = '14px Arial';
-                ctx.textAlign = 'left';
-                ctx.textBaseline = 'top';
-                ctx.fillText('1. 最小全域木は元のグラフの全ての頂点を含み、辺の重みの合計が最小になる木構造です', 20, height - 80);
-                ctx.fillText('2. グラフから閉路を削除し、全ての頂点が最小コストで接続されるように辺を選択します', 20, height - 60);
-                ctx.fillText('3. n個の頂点に対して、最小全域木は常に(n-1)個の辺を持ちます', 20, height - 40);
-            }
-            
-            // グラフを描画する
-            drawGraph();
-        });
-    </script>
 </body>
 </html>
