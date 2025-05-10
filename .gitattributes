@@ -1,0 +1,11 @@
+*.html linguist-language=HTML
+*.cpp linguist-language=C++
+*.cs linguist-language=C#
+*.go linguist-language=go
+*.java linguist-language=Java
+*.js linguist-language=JavaScript
+*.kt linguist-language=Kotlin
+*.py linguist-language=Python
+*.rb linguist-language=Ruby
+*.rs linguist-language=Rust
+*.swift linguist-language=SWift
