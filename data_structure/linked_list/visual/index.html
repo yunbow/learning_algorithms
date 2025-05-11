@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>連結リストの図解</title>
+    <link rel="stylesheet" href="./../../../styles.css">
+    <style>        
+        .btn {
+            padding: 8px 16px;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.3s;
+        }
+        
+        .btn:hover {
+            background-color: #2980b9;
+        }
+        
+        .input-group {
+            display: flex;
+            gap: 5px;
+        }
+        
+        input {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            width: 50px;
+            text-align: center;
+        }
+        
+        .visualization {
+            margin-top: 30px;
+            overflow-x: auto;
+            padding: 20px 0;
+            min-height: 220px;
+        }
+        
+        .linked-list {
+            display: flex;
+            margin: 0 auto;
+            transition: all 0.5s ease;
+            position: relative;
+        }
+        
+        .node {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-right: 50px;
+            position: relative;
+            transition: all 0.5s ease;
+        }
+        
+        .node.highlight {
+            animation: pulse 1s infinite alternate;
+        }
+        
+        @keyframes pulse {
+            0% {
+                transform: scale(1);
+            }
+            100% {
+                transform: scale(1.1);
+            }
+        }
+        
+        .node-content {
+            width: 50px;
+            height: 50px;
+            background-color: #3498db;
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border-radius: 50%;
+            font-weight: bold;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            position: relative;
+            z-index: 2;
+        }
+        
+        .node.inserting .node-content {
+            background-color: #2ecc71;
+            animation: fadeIn 1s;
+        }
+        
+        .node.searching .node-content {
+            background-color: #f39c12;
+        }
+        
+        .node.deleting .node-content {
+            background-color: #e74c3c;
+            animation: fadeOut 1s forwards;
+        }
+        
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        @keyframes fadeOut {
+            to {
+                opacity: 0;
+                transform: scale(0.5);
+            }
+        }
+        
+        .pointer {
+            position: absolute;
+            top: 25px;
+            right: -40px;
+            width: 40px;
+            height: 2px;
+            background-color: #7f8c8d;
+            z-index: 1;
+        }
+        
+        .pointer::after {
+            content: '';
+            position: absolute;
+            right: 0;
+            top: -4px;
+            width: 0;
+            height: 0;
+            border-left: 8px solid #7f8c8d;
+            border-top: 5px solid transparent;
+            border-bottom: 5px solid transparent;
+        }
+        
+        .node:last-child .pointer {
+            display: none;
+        }
+        
+        .head-label, .tail-label {
+            font-size: 12px;
+            color: #7f8c8d;
+            margin-top: 5px;
+            font-weight: bold;
+        }
+        
+        .message {
+            text-align: center;
+            margin: 10px 0;
+            color: #333;
+            min-height: 24px;
+            font-size: 16px;
+        }
+        
+        .info {
+            margin-top: 20px;
+            font-size: 14px;
+            color: #555;
+        }
+    </style>
+</head>
+<body>
+    <ul class="breadcrumb">
+        <li><a href="./../../../">アルゴリズムの学習</a></li>
+        <li><a href="./../../">データ構造の問題</a></li>
+        <li><a href="./../">連結リスト</a></li>
+        <li>図解</li>
+    </ul>
+
+    <div class="container">
+        <h1>連結リストの図解</h1>
+        
+        <div class="controls">
+            <div class="input-group">
+                <input type="number" id="insert-value" min="0" max="99" placeholder="値">
+                <input type="number" id="insert-position" min="0" max="99" placeholder="位置">
+                <button class="btn" id="insert-btn">挿入</button>
+            </div>
+            
+            <div class="input-group">
+                <input type="number" id="delete-position" min="0" max="99" placeholder="位置">
+                <button class="btn" id="delete-btn">削除</button>
+            </div>
+            
+            <div class="input-group">
+                <input type="number" id="search-value" min="0" max="99" placeholder="値">
+                <button class="btn" id="search-btn">探索</button>
+            </div>
+            
+            <button class="btn" id="reverse-btn">反転</button>
+            <button class="btn" id="reset-btn">リセット</button>
+        </div>
+        
+        <div class="message" id="message"></div>
+        
+        <div class="visualization">
+            <div class="linked-list" id="linked-list"></div>
+        </div>
+        
+    </div>
+
+    <script>
+        // リストのステート
+        let list = [];
+        let animationInProgress = false;
+        const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
+        
+        // DOM要素
+        const listElement = document.getElementById('linked-list');
+        const messageElement = document.getElementById('message');
+        const insertBtn = document.getElementById('insert-btn');
+        const deleteBtn = document.getElementById('delete-btn');
+        const searchBtn = document.getElementById('search-btn');
+        const reverseBtn = document.getElementById('reverse-btn');
+        const resetBtn = document.getElementById('reset-btn');
+        
+        // 初期リストの作成
+        function initializeList() {
+            list = [5, 12, 8, 21, 33];
+            renderList();
+        }
+        
+        // リストの描画
+        function renderList() {
+            listElement.innerHTML = '';
+            list.forEach((value, index) => {
+                const node = document.createElement('div');
+                node.className = 'node';
+                node.id = `node-${index}`;
+                
+                const content = document.createElement('div');
+                content.className = 'node-content';
+                content.textContent = value;
+                
+                const pointer = document.createElement('div');
+                pointer.className = 'pointer';
+                
+                node.appendChild(content);
+                node.appendChild(pointer);
+                
+                // Head と Tail のラベル
+                if (index === 0) {
+                    const headLabel = document.createElement('div');
+                    headLabel.className = 'head-label';
+                    headLabel.textContent = 'Head';
+                    node.appendChild(headLabel);
+                }
+                
+                if (index === list.length - 1) {
+                    const tailLabel = document.createElement('div');
+                    tailLabel.className = 'tail-label';
+                    tailLabel.textContent = 'Tail';
+                    node.appendChild(tailLabel);
+                }
+                
+                listElement.appendChild(node);
+            });
+        }
+        
+        // メッセージの表示
+        function showMessage(msg) {
+            messageElement.textContent = msg;
+        }
+        
+        // 挿入操作
+        async function insertNode() {
+            if (animationInProgress) return;
+            animationInProgress = true;
+            
+            const value = parseInt(document.getElementById('insert-value').value);
+            let position = parseInt(document.getElementById('insert-position').value);
+            
+            if (isNaN(value)) {
+                showMessage('値を入力してください');
+                animationInProgress = false;
+                return;
+            }
+            
+            if (isNaN(position)) {
+                position = list.length; // デフォルトは末尾に追加
+            }
+            
+            position = Math.min(Math.max(0, position), list.length);
+            
+            showMessage(`位置 ${position} に値 ${value} を挿入しています...`);
+            
+            // アニメーションのために一時的に挿入
+            list.splice(position, 0, value);
+            renderList();
+            
+            // 挿入ノードのハイライト
+            const node = document.getElementById(`node-${position}`);
+            node.classList.add('inserting');
+            
+            await delay(1000);
+            
+            node.classList.remove('inserting');
+            showMessage(`位置 ${position} に値 ${value} を挿入しました`);
+            
+            animationInProgress = false;
+        }
+        
+        // 削除操作
+        async function deleteNode() {
+            if (animationInProgress) return;
+            animationInProgress = true;
+            
+            let position = parseInt(document.getElementById('delete-position').value);
+            
+            if (isNaN(position)) {
+                showMessage('削除する位置を入力してください');
+                animationInProgress = false;
+                return;
+            }
+            
+            if (position < 0 || position >= list.length) {
+                showMessage('有効な位置を指定してください');
+                animationInProgress = false;
+                return;
+            }
+            
+            const value = list[position];
+            showMessage(`位置 ${position} の値 ${value} を削除しています...`);
+            
+            // 削除ノードのハイライト
+            const node = document.getElementById(`node-${position}`);
+            node.classList.add('deleting');
+            
+            await delay(1000);
+            
+            // 実際に削除
+            list.splice(position, 1);
+            renderList();
+            
+            showMessage(`位置 ${position} の値 ${value} を削除しました`);
+            animationInProgress = false;
+        }
+        
+        // 探索操作
+        async function searchNode() {
+            if (animationInProgress) return;
+            animationInProgress = true;
+            
+            const value = parseInt(document.getElementById('search-value').value);
+            
+            if (isNaN(value)) {
+                showMessage('探索する値を入力してください');
+                animationInProgress = false;
+                return;
+            }
+            
+            showMessage(`値 ${value} を探索しています...`);
+            
+            let found = false;
+            
+            // 各ノードを順に検索
+            for (let i = 0; i < list.length; i++) {
+                const node = document.getElementById(`node-${i}`);
+                node.classList.add('searching');
+                
+                await delay(500);
+                
+                if (list[i] === value) {
+                    showMessage(`値 ${value} は位置 ${i} で見つかりました`);
+                    found = true;
+                    await delay(1000);
+                    node.classList.remove('searching');
+                    break;
+                }
+                
+                node.classList.remove('searching');
+            }
+            
+            if (!found) {
+                showMessage(`値 ${value} はリスト内に見つかりませんでした`);
+            }
+            
+            animationInProgress = false;
+        }
+        
+        // 反転操作
+        async function reverseList() {
+            if (animationInProgress) return;
+            animationInProgress = true;
+            
+            showMessage('リストを反転しています...');
+            
+            // 現在のリストの視覚的な反転アニメーション
+            const nodes = document.querySelectorAll('.node');
+            nodes.forEach(node => {
+                node.style.transform = 'translateY(20px)';
+                node.style.opacity = '0.5';
+            });
+            
+            await delay(800);
+            
+            // 実際のリストを反転
+            list.reverse();
+            renderList();
+            
+            showMessage('リストを反転しました');
+            animationInProgress = false;
+        }
+        
+        // イベントリスナーの設定
+        insertBtn.addEventListener('click', insertNode);
+        deleteBtn.addEventListener('click', deleteNode);
+        searchBtn.addEventListener('click', searchNode);
+        reverseBtn.addEventListener('click', reverseList);
+        resetBtn.addEventListener('click', () => {
+            if (animationInProgress) return;
+            initializeList();
+            showMessage('リストをリセットしました');
+        });
+        
+        // 初期化
+        initializeList();
+        showMessage('操作を選択してください');
+    </script>
+</body>
+</html>

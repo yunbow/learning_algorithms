@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>配列の並び替え問題の図解</title>
+    <link rel="stylesheet" href="./../../styles.css">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <ul class="breadcrumb">
+        <li><a href="./../../">アルゴリズムの学習</a></li>
+        <li><a href="./../">データ構造の問題</a></li>
+        <li>図解</li>
+    </ul>
+
+    <div class="container">
+        <h1>配列の並び替えアルゴリズム可視化</h1>
+        
+        <div class="controls">
+            <select id="algorithm">
+                <option value="bubble">バブルソート</option>
+                <option value="selection">選択ソート</option>
+                <option value="insertion">挿入ソート</option>
+                <option value="quick">クイックソート</option>
+                <option value="merge">マージソート</option>
+            </select>
+            <button id="start">実行</button>
+            <button id="clear">クリア</button>
+        </div>
+
+        <div class="visualization">
+            <div id="array-container"></div>
+        </div>
+
+        <div class="info">
+            <div class="step-info">
+                <h4>処理ステップ: <span id="step-count">0</span></h4>
+            </div>
+            <div class="step-info">
+                <h4>処理内容:</h4>
+                <p id="description-text">アルゴリズムを選択して実行ボタンをクリックしてください。</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

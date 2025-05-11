@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>マップの図解</title>
+    <link rel="stylesheet" href="./../../../styles.css">
+    <style>
+        .input-group {
+            display: flex;
+            gap: 10px;
+        }
+        input {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            width: 100px;
+        }
+        .operation-buttons {
+            display: flex;
+            gap: 10px;
+        }
+        .visualization {
+            background-color: #f9f9f9;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            position: relative;
+            height: 300px;
+            overflow: hidden;
+        }
+        .map-container {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .map-entry {
+            display: flex;
+            background-color: white;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 10px;
+            transition: all 0.3s;
+            position: relative;
+        }
+        .map-entry.highlight {
+            background-color: #fffacd;
+            border-color: #ffd700;
+            box-shadow: 0 0 5px rgba(255, 215, 0, 0.5);
+        }
+        .map-entry.found {
+            background-color: #d4edda;
+            border-color: #28a745;
+            box-shadow: 0 0 5px rgba(40, 167, 69, 0.5);
+        }
+        .map-entry.not-found {
+            background-color: #f8d7da;
+            border-color: #dc3545;
+            box-shadow: 0 0 5px rgba(220, 53, 69, 0.5);
+        }
+        .map-entry.deleting {
+            opacity: 0.5;
+            transform: translateX(100px);
+        }
+        .map-entry.adding {
+            animation: slideIn 0.5s forwards;
+        }
+        .key {
+            font-weight: bold;
+            width: 100px;
+        }
+        .value {
+            flex-grow: 1;
+        }
+        .arrow {
+            margin: 0 10px;
+        }
+        .status {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 4px;
+            background-color: #e8f4f8;
+            min-height: 60px;
+        }
+        @keyframes slideIn {
+            from {
+                transform: translateX(-100px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+    </style>
+</head>
+<body>
+    <ul class="breadcrumb">
+        <li><a href="./../../../">アルゴリズムの学習</a></li>
+        <li><a href="./../../">データ構造の問題</a></li>
+        <li><a href="./../">マップ</a></li>
+        <li>図解</li>
+    </ul>
+
+    <div class="container">
+        <h1>マップの図解</h1>
+        
+        <div class="controls">
+            <div class="input-group">
+                <input type="text" id="keyInput" placeholder="キー">
+                <input type="text" id="valueInput" placeholder="値">
+            </div>
+            <div class="operation-buttons">
+                <button id="addBtn">追加</button>
+                <button id="deleteBtn">削除</button>
+                <button id="searchBtn">検索</button>
+            </div>
+        </div>
+        
+        <div class="visualization">
+            <div class="map-container" id="mapContainer">
+                <!-- マップの内容がここに表示されます -->
+            </div>
+        </div>
+        
+        <div class="status" id="status">
+            操作を選択してください。
+        </div>
+    </div>
+
+    <script>
+        // マップを表現するためのシンプルなオブジェクト
+        const map = new Map();
+        const mapContainer = document.getElementById('mapContainer');
+        const statusEl = document.getElementById('status');
+        const keyInput = document.getElementById('keyInput');
+        const valueInput = document.getElementById('valueInput');
+        
+        // 初期データを追加
+        const initialData = [
+            { key: "apple", value: "りんご" },
+            { key: "banana", value: "バナナ" },
+            { key: "cherry", value: "さくらんぼ" }
+        ];
+        
+        initialData.forEach(item => {
+            map.set(item.key, item.value);
+        });
+        
+        // マップを表示する関数
+        function renderMap() {
+            mapContainer.innerHTML = '';
+            map.forEach((value, key) => {
+                const entry = document.createElement('div');
+                entry.className = 'map-entry';
+                entry.dataset.key = key;
+                
+                const keyEl = document.createElement('div');
+                keyEl.className = 'key';
+                keyEl.textContent = key;
+                
+                const arrow = document.createElement('div');
+                arrow.className = 'arrow';
+                arrow.textContent = '→';
+                
+                const valueEl = document.createElement('div');
+                valueEl.className = 'value';
+                valueEl.textContent = value;
+                
+                entry.appendChild(keyEl);
+                entry.appendChild(arrow);
+                entry.appendChild(valueEl);
+                
+                mapContainer.appendChild(entry);
+            });
+        }
+        
+        // 初期表示
+        renderMap();
+        
+        // 追加ボタンのクリックハンドラ
+        document.getElementById('addBtn').addEventListener('click', () => {
+            const key = keyInput.value.trim();
+            const value = valueInput.value.trim();
+            
+            if (!key) {
+                statusEl.textContent = 'キーを入力してください。';
+                return;
+            }
+            
+            // すでに存在するキーかどうか確認
+            const exists = map.has(key);
+            const action = exists ? '更新' : '追加';
+            
+            // アニメーションのために現在の要素をハイライト（更新の場合）
+            if (exists) {
+                const existingEl = document.querySelector(`.map-entry[data-key="${key}"]`);
+                existingEl.classList.add('highlight');
+                setTimeout(() => {
+                    existingEl.classList.remove('highlight');
+                }, 1500);
+            }
+            
+            // マップに追加
+            map.set(key, value);
+            statusEl.textContent = `キー「${key}」を${action}しました。`;
+            
+            // 再描画
+            renderMap();
+            
+            // 新しく追加された要素にアニメーションを適用
+            const newEl = document.querySelector(`.map-entry[data-key="${key}"]`);
+            if (newEl && !exists) {
+                newEl.classList.add('adding');
+                setTimeout(() => {
+                    newEl.classList.remove('adding');
+                }, 500);
+            }
+            
+            // 入力欄をクリア
+            keyInput.value = '';
+            valueInput.value = '';
+        });
+        
+        // 削除ボタンのクリックハンドラ
+        document.getElementById('deleteBtn').addEventListener('click', () => {
+            const key = keyInput.value.trim();
+            
+            if (!key) {
+                statusEl.textContent = '削除するキーを入力してください。';
+                return;
+            }
+            
+            // キーが存在するかチェック
+            if (map.has(key)) {
+                // 削除する要素にアニメーションを適用
+                const elementToDelete = document.querySelector(`.map-entry[data-key="${key}"]`);
+                elementToDelete.classList.add('deleting');
+                
+                // アニメーション後に実際に削除
+                setTimeout(() => {
+                    map.delete(key);
+                    statusEl.textContent = `キー「${key}」を削除しました。`;
+                    renderMap();
+                }, 500);
+            } else {
+                statusEl.textContent = `キー「${key}」は存在しません。`;
+            }
+            
+            // 入力欄をクリア
+            keyInput.value = '';
+        });
+        
+        // 検索ボタンのクリックハンドラ
+        document.getElementById('searchBtn').addEventListener('click', () => {
+            const key = keyInput.value.trim();
+            
+            if (!key) {
+                statusEl.textContent = '検索するキーを入力してください。';
+                return;
+            }
+            
+            // アニメーションで検索プロセスを表現
+            const entries = document.querySelectorAll('.map-entry');
+            let foundIndex = -1;
+            
+            // 各エントリーを順番にハイライト
+            let i = 0;
+            const highlightNext = () => {
+                if (i > 0) {
+                    entries[i-1].classList.remove('highlight');
+                }
+                
+                if (i < entries.length) {
+                    const entry = entries[i];
+                    entry.classList.add('highlight');
+                    
+                    if (entry.dataset.key === key) {
+                        foundIndex = i;
+                        setTimeout(() => {
+                            entry.classList.remove('highlight');
+                            entry.classList.add('found');
+                            statusEl.textContent = `キー「${key}」が見つかりました！値：「${map.get(key)}」`;
+                            setTimeout(() => {
+                                entry.classList.remove('found');
+                            }, 1500);
+                        }, 300);
+                    } else {
+                        setTimeout(highlightNext, 300);
+                    }
+                    i++;
+                } else {
+                    // 見つからなかった場合
+                    if (foundIndex === -1) {
+                        statusEl.textContent = `キー「${key}」は見つかりませんでした。`;
+                        const searchInput = document.querySelector('#keyInput');
+                        searchInput.classList.add('not-found');
+                        setTimeout(() => {
+                            searchInput.classList.remove('not-found');
+                        }, 1500);
+                    }
+                }
+            };
+            
+            highlightNext();
+        });
+    </script>
+</body>
+</html>

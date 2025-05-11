@@ -1,0 +1,764 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>グラフの図解</title>
+  <link rel="stylesheet" href="./../../../styles.css">
+  <style>
+    button.active {
+      background-color: #2c3e50;
+    }
+    
+    .algorithm-info {
+      margin-bottom: 20px;
+      padding: 15px;
+      background-color: #fff;
+      border-radius: 5px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .canvas-container {
+      width: 100%;
+      display: flex;
+      justify-content: center;
+    }
+    
+    .control-panel {
+      margin-top: 20px;
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+    }
+    
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 15px;
+      margin-top: 20px;
+      padding: 10px;
+      background-color: #fff;
+      border-radius: 5px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    
+    .legend-color {
+      width: 15px;
+      height: 15px;
+      border-radius: 50%;
+    }
+    
+    /* スピード調整スライダー */
+    .speed-control {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: 15px;
+      justify-content: center;
+    }
+    
+    .speed-slider {
+      width: 200px;
+    }
+  </style>
+</head>
+<body>
+  <ul class="breadcrumb">
+    <li><a href="./../../../">アルゴリズムの学習</a></li>
+    <li><a href="./../../">データ構造の問題</a></li>
+    <li><a href="./../">配列</a></li>
+    <li>図解</li>
+  </ul>
+
+  <div class="container">
+    <h1>グラフアルゴリズム図解</h1>
+    
+    <div class="controls">
+      <button id="bfs-btn" class="button-primary">幅優先探索 (BFS)</button>
+      <button id="dijkstra-btn" class="button-primary">ダイクストラ法 (最短経路)</button>
+      <button id="kruskal-btn" class="button-primary">クラスカル法 (最小全域木)</button>
+      <button id="connected-btn" class="button-primary">連結成分の検出</button>
+    </div>
+    
+    <div class="algorithm-info" id="algorithm-info">
+      アルゴリズムを選択してください。
+    </div>
+    
+    <div class="canvas-container">
+      <canvas id="graph-canvas" width="800" height="500"></canvas>
+    </div>
+    
+    <div class="control-panel">
+      <button id="start-btn" class="button-primary">開始</button>
+      <button id="new-graph-btn" class="button-primary">新しいグラフ</button>
+      <button id="reset-btn" class="button-primary">リセット</button>
+    </div>
+    
+    <div class="speed-control">
+      <label for="speed">速度:</label>
+      <input type="range" id="speed" class="speed-slider" min="1" max="10" value="5">
+    </div>
+    
+    <div class="legend" id="legend">
+      <!-- 凡例はJSで動的に生成 -->
+    </div>
+  </div>
+
+  <script>
+    // グラフデータとグローバル変数
+    let nodes = [];
+    let edges = [];
+    let currentAlgorithm = null;
+    let animationId = null;
+    let animationStep = 0;
+    let animationQueue = [];
+    let animationSpeed = 5;
+    let startNodeIndex = 0;
+    
+    // キャンバスとコンテキスト
+    const canvas = document.getElementById('graph-canvas');
+    const ctx = canvas.getContext('2d');
+    
+    // ボタン要素
+    const bfsBtn = document.getElementById('bfs-btn');
+    const dijkstraBtn = document.getElementById('dijkstra-btn');
+    const kruskalBtn = document.getElementById('kruskal-btn');
+    const connectedBtn = document.getElementById('connected-btn');
+    const startBtn = document.getElementById('start-btn');
+    const resetBtn = document.getElementById('reset-btn');
+    const newGraphBtn = document.getElementById('new-graph-btn');
+    const speedSlider = document.getElementById('speed');
+    const algorithmInfo = document.getElementById('algorithm-info');
+    const legendDiv = document.getElementById('legend');
+    
+    // イベントリスナー
+    bfsBtn.addEventListener('click', () => selectAlgorithm('bfs'));
+    dijkstraBtn.addEventListener('click', () => selectAlgorithm('dijkstra'));
+    kruskalBtn.addEventListener('click', () => selectAlgorithm('kruskal'));
+    connectedBtn.addEventListener('click', () => selectAlgorithm('connected'));
+    startBtn.addEventListener('click', startAnimation);
+    resetBtn.addEventListener('click', resetAnimation);
+    newGraphBtn.addEventListener('click', generateNewGraph);
+    speedSlider.addEventListener('input', () => {
+      animationSpeed = parseInt(speedSlider.value);
+    });
+    
+    // 初期グラフを生成
+    generateNewGraph();
+    
+    // 新しいグラフを生成する関数
+    function generateNewGraph() {
+      stopAnimation();
+      resetAnimation();
+      
+      // ノードを生成
+      const nodeCount = 8 + Math.floor(Math.random() * 4); // 8-11個のノード
+      nodes = [];
+      
+      for (let i = 0; i < nodeCount; i++) {
+        const angle = (i * 2 * Math.PI) / nodeCount;
+        const radius = 160;
+        const centerX = canvas.width / 2;
+        const centerY = canvas.height / 2;
+        
+        nodes.push({
+          id: i,
+          x: centerX + radius * Math.cos(angle),
+          y: centerY + radius * Math.sin(angle),
+          label: String.fromCharCode(65 + i), // A, B, C, ...
+          state: 'default'
+        });
+      }
+      
+      // エッジを生成
+      edges = [];
+      // 最低限の連結性を確保
+      for (let i = 0; i < nodeCount - 1; i++) {
+        edges.push({
+          from: i,
+          to: i + 1,
+          weight: 1 + Math.floor(Math.random() * 9), // 1-9のランダムな重み
+          state: 'default'
+        });
+      }
+      
+      // 最後のノードと最初のノードを接続
+      edges.push({
+        from: nodeCount - 1,
+        to: 0,
+        weight: 1 + Math.floor(Math.random() * 9),
+        state: 'default'
+      });
+      
+      // ランダムに追加のエッジを生成
+      const additionalEdges = Math.floor(nodeCount * 0.7);
+      for (let i = 0; i < additionalEdges; i++) {
+        const from = Math.floor(Math.random() * nodeCount);
+        let to = Math.floor(Math.random() * nodeCount);
+        
+        // 自己ループと重複を避ける
+        if (from !== to && !edges.some(e => (e.from === from && e.to === to) || (e.from === to && e.to === from))) {
+          edges.push({
+            from: from,
+            to: to,
+            weight: 1 + Math.floor(Math.random() * 9),
+            state: 'default'
+          });
+        }
+      }
+      
+      // スタートノードをランダムに選択
+      startNodeIndex = Math.floor(Math.random() * nodeCount);
+      
+      // グラフを描画
+      drawGraph();
+      updateLegend();
+    }
+    
+    // アルゴリズムを選択する関数
+    function selectAlgorithm(algorithm) {
+      currentAlgorithm = algorithm;
+      
+      // ボタンのアクティブ状態を更新
+      [bfsBtn, dijkstraBtn, kruskalBtn, connectedBtn].forEach(btn => btn.classList.remove('active'));
+      
+      switch (algorithm) {
+        case 'bfs':
+          bfsBtn.classList.add('active');
+          algorithmInfo.innerHTML = '<strong>幅優先探索 (BFS)</strong>: 開始ノードから近い順に探索するアルゴリズムです。グラフを層ごとに探索します。';
+          break;
+        case 'dijkstra':
+          dijkstraBtn.classList.add('active');
+          algorithmInfo.innerHTML = '<strong>ダイクストラ法</strong>: 重み付きグラフで最短経路を見つけるアルゴリズムです。各ノードへの最短距離を計算します。';
+          break;
+        case 'kruskal':
+          kruskalBtn.classList.add('active');
+          algorithmInfo.innerHTML = '<strong>クラスカル法</strong>: 最小全域木を見つけるアルゴリズムです。辺の重みが小さい順に選択し、閉路を作らないようにします。';
+          break;
+        case 'connected':
+          connectedBtn.classList.add('active');
+          algorithmInfo.innerHTML = '<strong>連結成分の検出</strong>: グラフ内の連結成分（互いに到達可能なノードの集合）を検出します。';
+          break;
+      }
+      
+      resetAnimation();
+      updateLegend();
+    }
+    
+    // アニメーションを開始する関数
+    function startAnimation() {
+      if (!currentAlgorithm) {
+        alert('アルゴリズムを選択してください');
+        return;
+      }
+      
+      if (animationId) {
+        stopAnimation(); // 既存のアニメーションを停止
+      }
+      
+      // 各アルゴリズムの実行
+      switch (currentAlgorithm) {
+        case 'bfs':
+          runBFS(startNodeIndex);
+          break;
+        case 'dijkstra':
+          runDijkstra(startNodeIndex);
+          break;
+        case 'kruskal':
+          runKruskal();
+          break;
+        case 'connected':
+          runConnectedComponents();
+          break;
+      }
+      
+      // アニメーションループ開始
+      animateStep();
+    }
+    
+    // アニメーションをリセットする関数
+    function resetAnimation() {
+      stopAnimation();
+      animationStep = 0;
+      animationQueue = [];
+      
+      // ノードとエッジの状態をリセット
+      nodes.forEach(node => node.state = 'default');
+      edges.forEach(edge => edge.state = 'default');
+      
+      drawGraph();
+    }
+    
+    // アニメーションを停止する関数
+    function stopAnimation() {
+      if (animationId) {
+        cancelAnimationFrame(animationId);
+        animationId = null;
+      }
+    }
+    
+    // アニメーションのステップを進める関数
+    function animateStep() {
+      if (animationStep < animationQueue.length) {
+        const currentAction = animationQueue[animationStep];
+        
+        if (currentAction.type === 'node') {
+          nodes[currentAction.id].state = currentAction.state;
+        } else if (currentAction.type === 'edge') {
+          const edge = edges.find(e => e.from === currentAction.from && e.to === currentAction.to);
+          if (edge) edge.state = currentAction.state;
+        }
+        
+        drawGraph();
+        animationStep++;
+        
+        // アニメーション速度に基づいて次のステップを予約
+        const delay = 1000 / animationSpeed;
+        setTimeout(() => {
+          animationId = requestAnimationFrame(animateStep);
+        }, delay);
+      }
+    }
+    
+    // グラフを描画する関数
+    function drawGraph() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      
+      // エッジを描画
+      edges.forEach(edge => {
+        const fromNode = nodes[edge.from];
+        const toNode = nodes[edge.to];
+        
+        ctx.beginPath();
+        ctx.moveTo(fromNode.x, fromNode.y);
+        ctx.lineTo(toNode.x, toNode.y);
+        
+        // エッジの状態に基づいて色を設定
+        switch (edge.state) {
+          case 'active':
+            ctx.strokeStyle = '#e74c3c';
+            ctx.lineWidth = 3;
+            break;
+          case 'visited':
+            ctx.strokeStyle = '#3498db';
+            ctx.lineWidth = 3;
+            break;
+          case 'selected':
+            ctx.strokeStyle = '#2ecc71';
+            ctx.lineWidth = 4;
+            break;
+          default:
+            ctx.strokeStyle = '#95a5a6';
+            ctx.lineWidth = 2;
+        }
+        
+        ctx.stroke();
+        
+        // 重みを描画
+        const midX = (fromNode.x + toNode.x) / 2;
+        const midY = (fromNode.y + toNode.y) / 2;
+        
+        ctx.fillStyle = 'white';
+        ctx.beginPath();
+        ctx.arc(midX, midY, 10, 0, 2 * Math.PI);
+        ctx.fill();
+        
+        ctx.fillStyle = '#34495e';
+        ctx.font = '12px Arial';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(edge.weight, midX, midY);
+      });
+      
+      // ノードを描画
+      nodes.forEach(node => {
+        ctx.beginPath();
+        ctx.arc(node.x, node.y, 20, 0, 2 * Math.PI);
+        
+        // ノードの状態に基づいて色を設定
+        switch (node.state) {
+          case 'active':
+            ctx.fillStyle = '#e74c3c';
+            break;
+          case 'visited':
+            ctx.fillStyle = '#3498db';
+            break;
+          case 'current':
+            ctx.fillStyle = '#f39c12';
+            break;
+          case 'start':
+            ctx.fillStyle = '#2ecc71';
+            break;
+          case 'component1':
+            ctx.fillStyle = '#9b59b6';
+            break;
+          case 'component2':
+            ctx.fillStyle = '#16a085';
+            break;
+          case 'component3':
+            ctx.fillStyle = '#f1c40f';
+            break;
+          case 'component4':
+            ctx.fillStyle = '#e67e22';
+            break;
+          default:
+            ctx.fillStyle = '#bdc3c7';
+        }
+        
+        ctx.fill();
+        
+        // ノードのラベルを描画
+        ctx.fillStyle = 'white';
+        ctx.font = 'bold 14px Arial';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(node.label, node.x, node.y);
+      });
+    }
+    
+    // 凡例を更新する関数
+    function updateLegend() {
+      legendDiv.innerHTML = '';
+      
+      const legendItems = [];
+      
+      // 基本の凡例項目
+      legendItems.push({ color: '#bdc3c7', label: '未訪問ノード' });
+      legendItems.push({ color: '#95a5a6', label: '未訪問エッジ' });
+      
+      // アルゴリズム固有の凡例項目
+      switch (currentAlgorithm) {
+        case 'bfs':
+          legendItems.push({ color: '#2ecc71', label: '開始ノード' });
+          legendItems.push({ color: '#e74c3c', label: '現在の探索ノード' });
+          legendItems.push({ color: '#3498db', label: '訪問済みノード' });
+          legendItems.push({ color: '#3498db', label: '訪問済みエッジ' });
+          break;
+        
+        case 'dijkstra':
+          legendItems.push({ color: '#2ecc71', label: '開始ノード' });
+          legendItems.push({ color: '#f39c12', label: '現在処理中のノード' });
+          legendItems.push({ color: '#3498db', label: '確定済みノード' });
+          legendItems.push({ color: '#e74c3c', label: '探索中のエッジ' });
+          legendItems.push({ color: '#2ecc71', label: '最短経路' });
+          break;
+        
+        case 'kruskal':
+          legendItems.push({ color: '#e74c3c', label: '検討中のエッジ' });
+          legendItems.push({ color: '#2ecc71', label: '選択されたエッジ' });
+          break;
+        
+        case 'connected':
+          legendItems.push({ color: '#9b59b6', label: '連結成分1' });
+          legendItems.push({ color: '#16a085', label: '連結成分2' });
+          legendItems.push({ color: '#f1c40f', label: '連結成分3' });
+          legendItems.push({ color: '#e67e22', label: '連結成分4' });
+          break;
+      }
+      
+      // 凡例アイテムを生成
+      legendItems.forEach(item => {
+        const legendItem = document.createElement('div');
+        legendItem.className = 'legend-item';
+        
+        const legendColor = document.createElement('div');
+        legendColor.className = 'legend-color';
+        legendColor.style.backgroundColor = item.color;
+        
+        const legendLabel = document.createElement('span');
+        legendLabel.textContent = item.label;
+        
+        legendItem.appendChild(legendColor);
+        legendItem.appendChild(legendLabel);
+        legendDiv.appendChild(legendItem);
+      });
+    }
+    
+    // BFSアルゴリズムを実行する関数
+    function runBFS(startIndex) {
+      // アニメーションキューをクリア
+      animationQueue = [];
+      
+      // 訪問済みノードを追跡
+      const visited = new Array(nodes.length).fill(false);
+      
+      // キューを初期化
+      const queue = [startIndex];
+      visited[startIndex] = true;
+      
+      // スタートノードをマーク
+      animationQueue.push({ type: 'node', id: startIndex, state: 'start' });
+      
+      while (queue.length > 0) {
+        const currentNode = queue.shift();
+        
+        // 現在のノードをアクティブとしてマーク
+        animationQueue.push({ type: 'node', id: currentNode, state: 'active' });
+        
+        // 隣接ノードを探索
+        for (const edge of edges) {
+          let nextNode = null;
+          
+          if (edge.from === currentNode) {
+            nextNode = edge.to;
+          } else if (edge.to === currentNode) {
+            nextNode = edge.from;
+          }
+          
+          if (nextNode !== null && !visited[nextNode]) {
+            // エッジをアクティブとしてマーク
+            animationQueue.push({ 
+              type: 'edge', 
+              from: currentNode, 
+              to: nextNode, 
+              state: 'active' 
+            });
+            
+            // ノードを訪問済みとしてマーク
+            visited[nextNode] = true;
+            animationQueue.push({ type: 'node', id: nextNode, state: 'visited' });
+            
+            // エッジを訪問済みとしてマーク
+            animationQueue.push({ 
+              type: 'edge', 
+              from: currentNode, 
+              to: nextNode, 
+              state: 'visited' 
+            });
+            
+            // キューに追加
+            queue.push(nextNode);
+          }
+        }
+        
+        // 現在のノードを訪問済みとしてマーク
+        if (currentNode !== startIndex) {
+          animationQueue.push({ type: 'node', id: currentNode, state: 'visited' });
+        }
+      }
+    }
+    
+    // ダイクストラアルゴリズムを実行する関数
+    function runDijkstra(startIndex) {
+      // アニメーションキューをクリア
+      animationQueue = [];
+      
+      const numNodes = nodes.length;
+      const distances = new Array(numNodes).fill(Infinity);
+      const previous = new Array(numNodes).fill(null);
+      const visited = new Array(numNodes).fill(false);
+      
+      distances[startIndex] = 0;
+      
+      // スタートノードをマーク
+      animationQueue.push({ type: 'node', id: startIndex, state: 'start' });
+      
+      for (let i = 0; i < numNodes; i++) {
+        // 未訪問のノードの中から最小距離のノードを見つける
+        let minDistance = Infinity;
+        let minIndex = -1;
+        
+        for (let j = 0; j < numNodes; j++) {
+          if (!visited[j] && distances[j] < minDistance) {
+            minDistance = distances[j];
+            minIndex = j;
+          }
+        }
+        
+        if (minIndex === -1) break; // 到達可能なノードがない
+        
+        // 現在のノードを処理中としてマーク
+        animationQueue.push({ type: 'node', id: minIndex, state: 'current' });
+        
+        // 隣接ノードを探索
+        for (const edge of edges) {
+          let nextNode = null;
+          let weight = edge.weight;
+          
+          if (edge.from === minIndex) {
+            nextNode = edge.to;
+          } else if (edge.to === minIndex) {
+            nextNode = edge.from;
+          }
+          
+          if (nextNode !== null && !visited[nextNode]) {
+            // エッジをアクティブとしてマーク
+            animationQueue.push({ 
+              type: 'edge', 
+              from: minIndex, 
+              to: nextNode, 
+              state: 'active' 
+            });
+            
+            // 距離を更新
+            if (distances[minIndex] + weight < distances[nextNode]) {
+              distances[nextNode] = distances[minIndex] + weight;
+              previous[nextNode] = minIndex;
+            }
+            
+            // エッジを通常状態に戻す
+            animationQueue.push({ 
+              type: 'edge', 
+              from: minIndex, 
+              to: nextNode, 
+              state: 'default' 
+            });
+          }
+        }
+        
+        // ノードを訪問済みとしてマーク
+        visited[minIndex] = true;
+        if (minIndex !== startIndex) {
+          animationQueue.push({ type: 'node', id: minIndex, state: 'visited' });
+        }
+      }
+      
+      // 最短経路を表示
+      for (let i = 0; i < numNodes; i++) {
+        if (i !== startIndex && previous[i] !== null) {
+          let current = i;
+          let prev = previous[current];
+          
+          while (prev !== null) {
+            animationQueue.push({ 
+              type: 'edge', 
+              from: prev, 
+              to: current, 
+              state: 'selected' 
+            });
+            
+            current = prev;
+            prev = previous[current];
+          }
+        }
+      }
+    }
+    
+    // クラスカルアルゴリズムを実行する関数
+    function runKruskal() {
+      // アニメーションキューをクリア
+      animationQueue = [];
+      
+      // エッジを重みで昇順にソート
+      const sortedEdges = [...edges].sort((a, b) => a.weight - b.weight);
+      
+      // 各ノードが属する集合を追跡（Union-Find）
+      const parent = Array.from({ length: nodes.length }, (_, i) => i);
+      
+      // 2つの集合を結合する関数
+      function union(a, b) {
+        parent[find(b)] = find(a);
+      }
+      
+      // 要素が属する集合の根を見つける関数
+      function find(x) {
+        if (parent[x] !== x) {
+          parent[x] = find(parent[x]);
+        }
+        return parent[x];
+      }
+      
+      // 最小全域木のエッジを選択
+      const mstEdges = [];
+      
+      for (const edge of sortedEdges) {
+        // エッジをアクティブとしてマーク
+        animationQueue.push({ 
+          type: 'edge', 
+          from: edge.from, 
+          to: edge.to, 
+          state: 'active' 
+        });
+        
+        const rootFrom = find(edge.from);
+        const rootTo = find(edge.to);
+        
+        if (rootFrom !== rootTo) {
+          // 閉路を形成しない場合、エッジを選択
+          union(rootFrom, rootTo);
+          mstEdges.push(edge);
+          
+          // エッジを選択済みとしてマーク
+          animationQueue.push({ 
+            type: 'edge', 
+            from: edge.from, 
+            to: edge.to, 
+            state: 'selected' 
+          });
+        } else {
+          // 閉路を形成する場合、エッジを戻す
+          animationQueue.push({ 
+            type: 'edge', 
+            from: edge.from, 
+            to: edge.to, 
+            state: 'default' 
+          });
+        }
+      }
+    }
+    
+    // 連結成分を検出する関数
+    function runConnectedComponents() {
+      // アニメーションキューをクリア
+      animationQueue = [];
+      
+      const visited = new Array(nodes.length).fill(false);
+      const componentColors = ['component1', 'component2', 'component3', 'component4'];
+      let componentIndex = 0;
+      
+      // DFSによる連結成分の検出
+      function dfs(node, componentColor) {
+        visited[node] = true;
+        animationQueue.push({ type: 'node', id: node, state: componentColor });
+        
+        for (const edge of edges) {
+          let nextNode = null;
+          
+          if (edge.from === node) {
+            nextNode = edge.to;
+          } else if (edge.to === node) {
+            nextNode = edge.from;
+          }
+          
+          if (nextNode !== null && !visited[nextNode]) {
+            animationQueue.push({ 
+              type: 'edge', 
+              from: node, 
+              to: nextNode, 
+              state: 'active' 
+            });
+            
+            dfs(nextNode, componentColor);
+            
+            animationQueue.push({ 
+              type: 'edge', 
+              from: node, 
+              to: nextNode, 
+              state: 'visited' 
+            });
+          }
+        }
+      }
+      
+      // すべてのノードを訪問
+      for (let i = 0; i < nodes.length; i++) {
+        if (!visited[i]) {
+          const componentColor = componentColors[componentIndex % componentColors.length];
+          dfs(i, componentColor);
+          componentIndex++;
+        }
+      }
+    }
+    
+    // 初期化
+    updateLegend();
+  </script>
+</body>
+</html>

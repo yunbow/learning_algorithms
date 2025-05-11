@@ -1,0 +1,678 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ヒープアルの図解</title>
+    <link rel="stylesheet" href="./../../../styles.css">
+    <style>
+        button:active {
+            transform: translateY(0);
+        }
+        #clearBtn {
+            background-color: #f44336;
+        }
+        #clearBtn:hover {
+            background-color: #d32f2f;
+        }
+        #extractBtn {
+            background-color: #2196F3;
+        }
+        #extractBtn:hover {
+            background-color: #0b7dda;
+        }
+        #heapifyBtn {
+            background-color: #9c27b0;
+        }
+        #heapifyBtn:hover {
+            background-color: #7b1fa2;
+        }
+        input {
+            padding: 10px;
+            font-size: 16px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            width: 60px;
+            text-align: center;
+        }
+        #heapContainer {
+            flex: 2;
+            position: relative;
+            height: 500px;
+            overflow: hidden;
+        }
+        #arrayContainer {
+            flex: 1;
+            margin-left: 20px;
+            padding: 15px;
+            background-color: white;
+            height: fit-content;
+        }
+        .array-item {
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+            width: 40px;
+            height: 40px;
+            margin: 5px;
+            border-radius: 50%;
+            background-color: #4CAF50;
+            color: white;
+            font-weight: bold;
+            font-size: 16px;
+        }
+        .heap-node {
+            position: absolute;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background-color: #4CAF50;
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+            font-size: 18px;
+            transition: all 0.5s ease;
+            z-index: 2;
+        }
+        .heap-edge {
+            position: absolute;
+            background-color: #333;
+            height: 3px;
+            transform-origin: 0 0;
+            z-index: 1;
+            transition: all 0.5s ease;
+        }
+        .highlight {
+            background-color: #ff9800;
+            box-shadow: 0 0 15px rgba(255, 152, 0, 0.7);
+            transform: scale(1.2);
+        }
+        .extracted {
+            background-color: #f44336;
+            animation: fadeOut 1s forwards;
+        }
+        .sorted {
+            background-color: #2196F3;
+        }
+        .unheapified {
+            background-color: #9e9e9e;
+        }
+        @keyframes fadeOut {
+            to {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+        }
+        .toggle-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 34px;
+            margin: 0 10px;
+        }
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 34px;
+        }
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 26px;
+            width: 26px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        input:checked + .slider {
+            background-color: #2196F3;
+        }
+        input:checked + .slider:before {
+            transform: translateX(26px);
+        }
+        .tooltip {
+            display: none;
+            position: absolute;
+            background-color: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 14px;
+            z-index: 10;
+        }
+        #message {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 18px;
+            color: #333;
+            font-weight: bold;
+            height: 24px;
+        }
+        #randomInputContainer {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px;
+            gap: 10px;
+        }
+        .small-input {
+            width: 80px;
+        }
+    </style>
+</head>
+<body>
+    <ul class="breadcrumb">
+        <li><a href="./../../../">アルゴリズムの学習</a></li>
+        <li><a href="./../../">データ構造の問題</a></li>
+        <li><a href="./../">ヒープ</a></li>
+        <li>図解</li>
+    </ul>
+
+    <div class="container">
+        <h1>ヒープアルの図解</h1>
+    
+        <div class="toggle-container">
+            <span>最小ヒープ</span>
+            <label class="toggle-switch">
+                <input type="checkbox" id="heapTypeToggle">
+                <span class="slider"></span>
+            </label>
+            <span>最大ヒープ</span>
+        </div>
+        
+        <div id="randomInputContainer">
+            <button id="randomBtn">ランダム値を追加</button>
+            <input type="number" id="randomCount" class="small-input" min="1" max="10" value="5" placeholder="個数">
+        </div>
+        
+        <div class="controls">
+            <input type="number" id="insertValue" min="1" max="99" value="25" placeholder="値">
+            <button id="insertBtn">挿入</button>
+            <button id="extractBtn">最小値/最大値の抽出</button>
+            <button id="heapifyBtn">ヒープ化</button>
+            <button id="clearBtn">クリア</button>
+        </div>
+        
+        <div id="message"></div>
+        
+        <div id="heapContainer"></div>
+        <div id="arrayContainer">
+            <h3>配列表現</h3>
+            <div id="arrayView"></div>
+        </div>
+        
+        <div class="tooltip" id="tooltip"></div>    
+    </div>
+
+    <script>
+        class Heap {
+            constructor(isMaxHeap = false) {
+                this.heap = [];
+                this.isMaxHeap = isMaxHeap;
+                this.isHeapified = true;
+            }
+            
+            getSize() {
+                return this.heap.length;
+            }
+            
+            isEmpty() {
+                return this.heap.length === 0;
+            }
+            
+            getParentIndex(index) {
+                return Math.floor((index - 1) / 2);
+            }
+            
+            getLeftChildIndex(index) {
+                return 2 * index + 1;
+            }
+            
+            getRightChildIndex(index) {
+                return 2 * index + 2;
+            }
+            
+            hasParent(index) {
+                return this.getParentIndex(index) >= 0;
+            }
+            
+            hasLeftChild(index) {
+                return this.getLeftChildIndex(index) < this.heap.length;
+            }
+            
+            hasRightChild(index) {
+                return this.getRightChildIndex(index) < this.heap.length;
+            }
+            
+            parent(index) {
+                return this.heap[this.getParentIndex(index)];
+            }
+            
+            leftChild(index) {
+                return this.heap[this.getLeftChildIndex(index)];
+            }
+            
+            rightChild(index) {
+                return this.heap[this.getRightChildIndex(index)];
+            }
+            
+            swap(index1, index2) {
+                const temp = this.heap[index1];
+                this.heap[index1] = this.heap[index2];
+                this.heap[index2] = temp;
+            }
+            
+            peek() {
+                if (this.isEmpty()) {
+                    return null;
+                }
+                return this.heap[0];
+            }
+            
+            shouldSwap(childIndex, parentIndex) {
+                if (this.isMaxHeap) {
+                    return this.heap[childIndex] > this.heap[parentIndex];
+                } else {
+                    return this.heap[childIndex] < this.heap[parentIndex];
+                }
+            }
+            
+            async insert(value) {
+                this.heap.push(value);
+                if (this.isHeapified) {
+                    await this.heapifyUp();
+                }
+            }
+            
+            async addRaw(value) {
+                this.heap.push(value);
+                this.isHeapified = false;
+            }
+            
+            async extract() {
+                if (this.isEmpty()) {
+                    return null;
+                }
+                
+                const root = this.heap[0];
+                this.heap[0] = this.heap[this.heap.length - 1];
+                this.heap.pop();
+                
+                if (!this.isEmpty()) {
+                    await this.heapifyDown();
+                }
+                
+                return root;
+            }
+            
+            async heapifyUp(startIndex = this.heap.length - 1) {
+                let index = startIndex;
+                
+                while (this.hasParent(index) && this.shouldSwap(index, this.getParentIndex(index))) {
+                    const parentIndex = this.getParentIndex(index);
+                    
+                    // Highlight nodes being compared
+                    await highlightNodes([index, parentIndex]);
+                    
+                    this.swap(index, parentIndex);
+                    
+                    // Update visualization
+                    await updateVisualization();
+                    
+                    index = parentIndex;
+                }
+            }
+            
+            async heapifyDown(startIndex = 0) {
+                let index = startIndex;
+                
+                while (this.hasLeftChild(index)) {
+                    let targetChildIndex = this.getLeftChildIndex(index);
+                    
+                    if (this.hasRightChild(index) && 
+                        ((this.isMaxHeap && this.rightChild(index) > this.leftChild(index)) ||
+                         (!this.isMaxHeap && this.rightChild(index) < this.leftChild(index)))) {
+                        targetChildIndex = this.getRightChildIndex(index);
+                    }
+                    
+                    // Highlight nodes being compared
+                    await highlightNodes([index, targetChildIndex]);
+                    
+                    if (!this.shouldSwap(targetChildIndex, index)) {
+                        break;
+                    }
+                    
+                    this.swap(index, targetChildIndex);
+                    
+                    // Update visualization
+                    await updateVisualization();
+                    
+                    index = targetChildIndex;
+                }
+            }
+            
+            async heapify() {
+                if (this.heap.length <= 1) {
+                    this.isHeapified = true;
+                    return;
+                }
+                
+                // Start from the last non-leaf node
+                const startIdx = Math.floor(this.heap.length / 2) - 1;
+                
+                for (let i = startIdx; i >= 0; i--) {
+                    await this.heapifyDown(i);
+                }
+                
+                this.isHeapified = true;
+            }
+            
+            clear() {
+                this.heap = [];
+                this.isHeapified = true;
+            }
+        }
+        
+        // DOM elements
+        const heapContainer = document.getElementById('heapContainer');
+        const arrayView = document.getElementById('arrayView');
+        const insertBtn = document.getElementById('insertBtn');
+        const extractBtn = document.getElementById('extractBtn');
+        const heapifyBtn = document.getElementById('heapifyBtn');
+        const clearBtn = document.getElementById('clearBtn');
+        const randomBtn = document.getElementById('randomBtn');
+        const insertValue = document.getElementById('insertValue');
+        const randomCount = document.getElementById('randomCount');
+        const heapTypeToggle = document.getElementById('heapTypeToggle');
+        const tooltip = document.getElementById('tooltip');
+        const messageEl = document.getElementById('message');
+        
+        // Initialize heap
+        let heap = new Heap(false); // Default to min heap
+        
+        // Setup
+        insertBtn.addEventListener('click', async () => {
+            const value = parseInt(insertValue.value);
+            if (isNaN(value) || value < 1 || value > 99) {
+                alert('1から99までの数値を入力してください。');
+                return;
+            }
+            
+            if (heap.heap.length >= 15) {
+                alert('ヒープの最大サイズに達しました（15ノード）。');
+                return;
+            }
+            
+            setMessage(`値 ${value} を挿入中...`);
+            disableButtons(true);
+            await heap.insert(value);
+            await updateVisualization();
+            setMessage(`値 ${value} を挿入しました`);
+            disableButtons(false);
+        });
+        
+        extractBtn.addEventListener('click', async () => {
+            if (heap.isEmpty()) {
+                alert('ヒープは空です。');
+                return;
+            }
+            
+            if (!heap.isHeapified) {
+                alert('まずヒープ化を行ってください。');
+                return;
+            }
+            
+            disableButtons(true);
+            const root = heap.heap[0];
+            setMessage(`${heap.isMaxHeap ? '最大' : '最小'}値 ${root} を抽出中...`);
+            
+            // Highlight root node before extraction
+            const rootNode = document.querySelector(`.heap-node[data-index="0"]`);
+            if (rootNode) {
+                rootNode.classList.add('extracted');
+                await sleep(1000);
+            }
+            
+            await heap.extract();
+            await updateVisualization();
+            setMessage(`${heap.isMaxHeap ? '最大' : '最小'}値 ${root} を抽出しました`);
+            disableButtons(false);
+        });
+        
+        heapifyBtn.addEventListener('click', async () => {
+            if (heap.isEmpty()) {
+                alert('ヒープは空です。');
+                return;
+            }
+            
+            disableButtons(true);
+            setMessage('ヒープ化を実行中...');
+            await heap.heapify();
+            await updateVisualization();
+            setMessage('ヒープ化完了');
+            disableButtons(false);
+        });
+        
+        randomBtn.addEventListener('click', async () => {
+            const count = parseInt(randomCount.value);
+            if (isNaN(count) || count < 1 || count > 10) {
+                alert('1から10までの数値を入力してください。');
+                return;
+            }
+            
+            if (heap.heap.length + count > 15) {
+                alert(`追加後のノード数が最大サイズ（15）を超えます。現在: ${heap.heap.length}`);
+                return;
+            }
+            
+            disableButtons(true);
+            setMessage(`${count}個のランダム値を追加中...`);
+            
+            for (let i = 0; i < count; i++) {
+                const randomValue = Math.floor(Math.random() * 99) + 1;
+                await heap.addRaw(randomValue);
+                await updateVisualization();
+                await sleep(300);
+            }
+            
+            setMessage('ランダム値の追加が完了しました。ヒープ化を行ってください。');
+            disableButtons(false);
+        });
+        
+        clearBtn.addEventListener('click', () => {
+            heap.clear();
+            updateVisualization();
+            setMessage('ヒープをクリアしました');
+        });
+        
+        heapTypeToggle.addEventListener('change', async () => {
+            const wasHeapified = heap.isHeapified;
+            heap = new Heap(heapTypeToggle.checked);
+            
+            // Copy values from old heap
+            const values = document.querySelectorAll('.heap-node');
+            for (const node of values) {
+                const value = parseInt(node.textContent);
+                if (!isNaN(value)) {
+                    heap.heap.push(value);
+                }
+            }
+            
+            if (wasHeapified && heap.heap.length > 0) {
+                disableButtons(true);
+                setMessage(`${heap.isMaxHeap ? '最大' : '最小'}ヒープに変更中...ヒープ化実行中`);
+                await heap.heapify();
+                disableButtons(false);
+            } else {
+                heap.isHeapified = false;
+            }
+            
+            await updateVisualization();
+            setMessage(`${heap.isMaxHeap ? '最大' : '最小'}ヒープに変更しました`);
+        });
+        
+        // Helper functions
+        function sleep(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+        
+        function disableButtons(disabled) {
+            insertBtn.disabled = disabled;
+            extractBtn.disabled = disabled;
+            heapifyBtn.disabled = disabled;
+            clearBtn.disabled = disabled;
+            randomBtn.disabled = disabled;
+            heapTypeToggle.disabled = disabled;
+        }
+        
+        function setMessage(msg) {
+            messageEl.textContent = msg;
+        }
+        
+        async function highlightNodes(indices) {
+            // Remove existing highlights
+            document.querySelectorAll('.heap-node').forEach(node => {
+                node.classList.remove('highlight');
+            });
+            
+            // Add highlight to specified nodes
+            indices.forEach(index => {
+                const node = document.querySelector(`.heap-node[data-index="${index}"]`);
+                if (node) {
+                    node.classList.add('highlight');
+                }
+            });
+            
+            await sleep(700);
+            
+            // Remove highlights
+            document.querySelectorAll('.heap-node').forEach(node => {
+                node.classList.remove('highlight');
+            });
+        }
+        
+        async function updateVisualization() {
+            heapContainer.innerHTML = '';
+            arrayView.innerHTML = '';
+            
+            // Create nodes and edges
+            heap.heap.forEach((value, index) => {
+                const node = document.createElement('div');
+                node.className = 'heap-node';
+                if (!heap.isHeapified) {
+                    node.classList.add('unheapified');
+                }
+                node.textContent = value;
+                node.dataset.index = index;
+                node.dataset.value = value;
+                
+                // Calculate node position
+                const level = Math.floor(Math.log2(index + 1));
+                const position = index + 1 - Math.pow(2, level);
+                const totalNodesInLevel = Math.pow(2, level);
+                const containerWidth = heapContainer.offsetWidth;
+                const containerHeight = heapContainer.offsetHeight;
+                
+                const horizontalSpacing = containerWidth / (totalNodesInLevel + 1);
+                const verticalSpacing = containerHeight / (Math.log2(15) + 2);
+                
+                const left = (position + 1) * horizontalSpacing;
+                const top = (level + 1) * verticalSpacing;
+                
+                node.style.left = `${left - 25}px`;
+                node.style.top = `${top - 25}px`;
+                
+                heapContainer.appendChild(node);
+                
+                // Create edge to parent if not root
+                if (index > 0) {
+                    const parentIndex = heap.getParentIndex(index);
+                    const edge = document.createElement('div');
+                    edge.className = 'heap-edge';
+                    
+                    // Calculate parent node position
+                    const parentLevel = Math.floor(Math.log2(parentIndex + 1));
+                    const parentPosition = parentIndex + 1 - Math.pow(2, parentLevel);
+                    const parentTotalNodesInLevel = Math.pow(2, parentLevel);
+                    const parentLeft = (parentPosition + 1) * (containerWidth / (parentTotalNodesInLevel + 1));
+                    const parentTop = (parentLevel + 1) * verticalSpacing;
+                    
+                    // Set edge position and rotation
+                    const dx = left - parentLeft;
+                    const dy = top - parentTop;
+                    const length = Math.sqrt(dx * dx + dy * dy);
+                    const angle = Math.atan2(dy, dx) * 180 / Math.PI;
+                    
+                    edge.style.width = `${length}px`;
+                    edge.style.left = `${parentLeft}px`;
+                    edge.style.top = `${parentTop}px`;
+                    edge.style.transform = `rotate(${angle}deg)`;
+                    
+                    heapContainer.appendChild(edge);
+                }
+                
+                // Add tooltip for node
+                node.addEventListener('mouseover', (e) => {
+                    tooltip.style.display = 'block';
+                    tooltip.style.left = `${e.pageX + 10}px`;
+                    tooltip.style.top = `${e.pageY + 10}px`;
+                    tooltip.textContent = `値: ${value}, インデックス: ${index}`;
+                });
+                
+                node.addEventListener('mouseout', () => {
+                    tooltip.style.display = 'none';
+                });
+                
+                // Show array representation
+                const arrayItem = document.createElement('div');
+                arrayItem.className = 'array-item';
+                if (!heap.isHeapified) {
+                    arrayItem.classList.add('unheapified');
+                }
+                arrayItem.textContent = value;
+                arrayView.appendChild(arrayItem);
+            });
+        }
+        
+        // Initial visualization
+        updateVisualization();
+        
+        // Add some initial data
+        async function initializeHeap() {
+            const initialValues = [12, 7, 25, 15, 10, 17, 5];
+            disableButtons(true);
+            
+            for (const value of initialValues) {
+                await heap.insert(value);
+                await updateVisualization();
+                await sleep(300);
+            }
+            
+            disableButtons(false);
+            setMessage('ヒープの準備完了');
+        }
+        
+        initializeHeap();
+    </script>
+</body>
+</html>
