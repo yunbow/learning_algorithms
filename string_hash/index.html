@@ -32,11 +32,11 @@
         <div class="section">
             <h2>アルゴリズム</h2>
             <ul>
+                <li><a href="./fnv/">FNV-1</a> (<a href="https://github.com/yunbow/learning_algorithms/tree/main/string_hash/fnv/src/" target="_blank">ソースコード</a>)</li>
+                <li><a href="./crc32/">CRC32</a> (<a href="https://github.com/yunbow/learning_algorithms/tree/main/string_hash/crc32/src/" target="_blank">ソースコード</a>)</li>
+                <li><a href="./md5/">MD5</a> (<a href="https://github.com/yunbow/learning_algorithms/tree/main/string_hash/md5/src/" target="_blank">ソースコード</a>)</li>
+                <li><a href="./sha/">SHA-1/SHA-2/SHA-3</a> (<a href="https://github.com/yunbow/learning_algorithms/tree/main/string_hash/sha/src/" target="_blank">ソースコード</a>)</li>
                 <li>MurmurHash</li>
-                <li><a href="./fnv/">FNV-1</a> (<a href="https://github.com/yunbow/learning_algorithms/tree/main/search_hash/fnv/src/" target="_blank">ソースコード</a>)</li>
-                <li><a href="./sha/">SHA-1/SHA-2/SHA-3</a> (<a href="https://github.com/yunbow/learning_algorithms/tree/main/search_hash/sha/src/" target="_blank">ソースコード</a>)</li>
-                <li><a href="./md5/">MD5</a> (<a href="https://github.com/yunbow/learning_algorithms/tree/main/search_hash/md5/src/" target="_blank">ソースコード</a>)</li>
-                <li><a href="./crc32/">CRC32</a> (<a href="https://github.com/yunbow/learning_algorithms/tree/main/search_hash/crc32/src/" target="_blank">ソースコード</a>)</li>
                 <li>CityHash</li>
             </ul>
         </div>
@@ -55,26 +55,26 @@
                 </thead>
                 <tbody>
                     <tr>
-                        <td><strong>MurmurHash</strong></td>
+                        <td><strong>MD5</strong></td>
                         <td>O(n)</td>
                         <td>
                             <ul>
                                 <li>非常に高速</li>
-                                <li>良好な分散特性</li>
-                                <li>実装が簡単</li>
+                                <li>広く実装されている</li>
+                                <li>比較的シンプルな実装</li>
                             </ul>
                         </td>
                         <td>
                             <ul>
-                                <li>暗号学的に安全ではない</li>
-                                <li>衝突耐性は中程度</li>
+                                <li>暗号学的に破られている（衝突攻撃が実用レベル）</li>
+                                <li>セキュリティ用途には使用不可</li>
                             </ul>
                         </td>
                         <td>
                             <ul>
-                                <li>ハッシュテーブル</li>
-                                <li>キャッシュシステム</li>
-                                <li>非暗号用途のチェックサム</li>
+                                <li>チェックサム（セキュリティ不要の場合）</li>
+                                <li>ファイル同一性の簡易チェック</li>
+                                <li>非セキュリティ用途のキャッシュシステム</li>
                             </ul>
                         </td>
                     </tr>
@@ -99,6 +99,31 @@
                                 <li>小規模ハッシュテーブル</li>
                                 <li>文字列のハッシュ化</li>
                                 <li>リソースが限られた環境</li>
+                            </ul>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><strong>CRC32</strong></td>
+                        <td>O(n)</td>
+                        <td>
+                            <ul>
+                                <li>極めて高速</li>
+                                <li>実装が簡単</li>
+                                <li>ハードウェア実装が一般的</li>
+                            </ul>
+                        </td>
+                        <td>
+                            <ul>
+                                <li>衝突率が高い</li>
+                                <li>暗号学的に安全ではない</li>
+                                <li>意図的な衝突が容易に生成できる</li>
+                            </ul>
+                        </td>
+                        <td>
+                            <ul>
+                                <li>データ転送の整合性チェック</li>
+                                <li>ネットワークパケットの検証</li>
+                                <li>非暗号用途のエラー検出</li>
                             </ul>
                         </td>
                     </tr>
@@ -177,51 +202,26 @@
                         </td>
                     </tr>
                     <tr>
-                        <td><strong>MD5</strong></td>
+                        <td><strong>MurmurHash</strong></td>
                         <td>O(n)</td>
                         <td>
                             <ul>
                                 <li>非常に高速</li>
-                                <li>広く実装されている</li>
-                                <li>比較的シンプルな実装</li>
-                            </ul>
-                        </td>
-                        <td>
-                            <ul>
-                                <li>暗号学的に破られている（衝突攻撃が実用レベル）</li>
-                                <li>セキュリティ用途には使用不可</li>
-                            </ul>
-                        </td>
-                        <td>
-                            <ul>
-                                <li>チェックサム（セキュリティ不要の場合）</li>
-                                <li>ファイル同一性の簡易チェック</li>
-                                <li>非セキュリティ用途のキャッシュシステム</li>
-                            </ul>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td><strong>CRC32</strong></td>
-                        <td>O(n)</td>
-                        <td>
-                            <ul>
-                                <li>極めて高速</li>
+                                <li>良好な分散特性</li>
                                 <li>実装が簡単</li>
-                                <li>ハードウェア実装が一般的</li>
                             </ul>
                         </td>
                         <td>
                             <ul>
-                                <li>衝突率が高い</li>
                                 <li>暗号学的に安全ではない</li>
-                                <li>意図的な衝突が容易に生成できる</li>
+                                <li>衝突耐性は中程度</li>
                             </ul>
                         </td>
                         <td>
                             <ul>
-                                <li>データ転送の整合性チェック</li>
-                                <li>ネットワークパケットの検証</li>
-                                <li>非暗号用途のエラー検出</li>
+                                <li>ハッシュテーブル</li>
+                                <li>キャッシュシステム</li>
+                                <li>非暗号用途のチェックサム</li>
                             </ul>
                         </td>
                     </tr>
