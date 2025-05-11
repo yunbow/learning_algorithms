@@ -1,7 +1,8 @@
+// C++
+// 配列の並び替え: バブルソート (Bubble Sort)
+
 #include <iostream>
 #include <vector>
-
-// 配列の並び替え: バブルソート (Bubble Sort)
 
 class ArrayData {
 private:

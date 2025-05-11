@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>選択ソートの図解</title>
+  <link rel="stylesheet" href="./../../../styles.css">
+  <style>
+    .array-container {
+      display: flex;
+      justify-content: center;
+      margin: 30px 0;
+      height: 300px;
+      align-items: flex-end;
+      width: 100%;
+    }
+    
+    .bar {
+      margin: 0 2px;
+      transition: all 0.3s ease;
+      position: relative;
+      background-color: #4285F4;
+      border-top-left-radius: 4px;
+      border-top-right-radius: 4px;
+    }
+    
+    .bar-value {
+      position: absolute;
+      top: -25px;
+      width: 100%;
+      text-align: center;
+      font-weight: bold;
+    }
+    
+    .bar.current {
+      background-color: #EA4335;
+    }
+    
+    .bar.min {
+      background-color: #FBBC05;
+    }
+    
+    .bar.sorted {
+      background-color: #34A853;
+    }
+    
+    .controls {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    
+    button:disabled {
+      background-color: #cccccc;
+      cursor: not-allowed;
+    }
+    
+    .explanation {
+      margin-top: 20px;
+      text-align: center;
+      min-height: 50px;
+      font-size: 18px;
+      color: #333;
+    }
+    
+    .step-counter {
+      text-align: center;
+      margin-top: 10px;
+      font-size: 16px;
+      color: #666;
+    }
+  </style>
+</head>
+<body>
+  <ul class="breadcrumb">
+    <li><a href="./../../../">アルゴリズムの学習</a></li>
+    <li><a href="./../../">配列の並べ替え問題</a></li>
+    <li><a href="./../">選択ソート</a></li>
+    <li>図解</li>
+  </ul>
+
+  <div class="container">
+    <h1>選択ソートアルゴリズム図解</h1>
+  
+    <div class="controls">
+      <button id="playBtn" class="button-success">アニメーション実行</button>
+      <button id="stepBtn" class="button-primary">ステップ実行</button>
+      <button id="resetBtn" class="button-danger">クリア</button>
+    </div>
+    
+    <div class="array-container" id="arrayContainer"></div>
+    
+    <div class="step-counter" id="stepCounter"></div>
+
+    <div class="explanation" id="explanation">
+      配列をクリアして、新しい配列で始めてください。
+    </div>
+    
+  </div>
+
+  <script>
+    // 初期配列
+    let array = [];
+    let stepsArr = [];
+    let currentStepIndex = 0;
+    let animationInterval;
+    let isPlaying = false;
+    
+    // DOM要素
+    const arrayContainer = document.getElementById('arrayContainer');
+    const resetBtn = document.getElementById('resetBtn');
+    const playBtn = document.getElementById('playBtn');
+    const stepBtn = document.getElementById('stepBtn');
+    const explanation = document.getElementById('explanation');
+    const stepCounter = document.getElementById('stepCounter');
+    
+    // イベントリスナー
+    resetBtn.addEventListener('click', resetAnimation);
+    playBtn.addEventListener('click', togglePlay);
+    stepBtn.addEventListener('click', nextStep);
+    
+    // 初期化
+    initializeArray();
+    prepareAnimationSteps();
+    renderArray(stepsArr[0]);
+    
+    // 配列の初期化
+    function initializeArray() {
+      array = [8, 4, 6, 2, 9, 5, 7, 3, 1, 10];
+      shuffle(array);
+    }
+    
+    // 配列をシャッフル
+    function shuffle(arr) {
+      for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+    }
+    
+    // 選択ソートのステップを準備
+    function prepareAnimationSteps() {
+      stepsArr = [];
+      const n = array.length;
+      
+      // 初期状態
+      stepsArr.push({
+        array: [...array],
+        current: -1,
+        minIndex: -1,
+        sorted: [],
+        explanation: "これから選択ソートを開始します。未ソート部分から最小値を見つけて、先頭の要素と交換していきます。"
+      });
+      
+      for (let i = 0; i < n; i++) {
+        let minIndex = i;
+        
+        // 現在の位置を示す
+        stepsArr.push({
+          array: [...array],
+          current: i,
+          minIndex: minIndex,
+          sorted: Array(i).fill(true),
+          explanation: `位置 ${i} から未ソート部分の探索を開始します。現在の最小値は ${array[minIndex]} です。`
+        });
+        
+        for (let j = i + 1; j < n; j++) {
+          // j位置の要素をチェック
+          stepsArr.push({
+            array: [...array],
+            current: j,
+            minIndex: minIndex,
+            sorted: Array(i).fill(true),
+            explanation: `位置 ${j} の値 ${array[j]} を確認します。現在の最小値は ${array[minIndex]} (位置 ${minIndex}) です。`
+          });
+          
+          if (array[j] < array[minIndex]) {
+            minIndex = j;
+            stepsArr.push({
+              array: [...array],
+              current: j,
+              minIndex: minIndex,
+              sorted: Array(i).fill(true),
+              explanation: `位置 ${j} の値 ${array[j]} が新しい最小値になりました。`
+            });
+          }
+        }
+        
+        // 最小値を適切な位置に移動
+        if (minIndex !== i) {
+          stepsArr.push({
+            array: [...array],
+            current: i,
+            minIndex: minIndex,
+            sorted: Array(i).fill(true),
+            explanation: `位置 ${i} の値 ${array[i]} と位置 ${minIndex} の最小値 ${array[minIndex]} を交換します。`
+          });
+          
+          [array[i], array[minIndex]] = [array[minIndex], array[i]];
+        }
+        
+        stepsArr.push({
+          array: [...array],
+          current: -1,
+          minIndex: -1,
+          sorted: Array(i + 1).fill(true),
+          explanation: i === n - 1 
+            ? "選択ソートが完了しました。配列は昇順にソートされています。" 
+            : `位置 ${i} に最小値 ${array[i]} が配置されました。次の位置へ進みます。`
+        });
+      }
+      
+      currentStepIndex = 0;
+    }
+    
+    // 配列を描画
+    function renderArray(step) {
+      arrayContainer.innerHTML = "";
+      const maxVal = Math.max(...step.array) * 1.2;
+      
+      step.array.forEach((value, index) => {
+        const bar = document.createElement('div');
+        bar.className = 'bar';
+        
+        // 高さは値に比例
+        const height = (value / maxVal) * 250;
+        bar.style.height = `${height}px`;
+        bar.style.width = `${Math.floor(600 / step.array.length)}px`;
+        
+        // 値を表示
+        const barValue = document.createElement('div');
+        barValue.className = 'bar-value';
+        barValue.textContent = value;
+        bar.appendChild(barValue);
+        
+        // バーの状態に応じたクラスを追加
+        if (step.sorted && step.sorted[index]) {
+          bar.classList.add('sorted');
+        } else if (index === step.current) {
+          bar.classList.add('current');
+        } else if (index === step.minIndex) {
+          bar.classList.add('min');
+        }
+        
+        arrayContainer.appendChild(bar);
+      });
+      
+      // 説明文を更新
+      explanation.textContent = step.explanation;
+      
+      // ステップカウンターを更新
+      stepCounter.textContent = `ステップ: ${currentStepIndex} / ${stepsArr.length - 1}`;
+    }
+    
+    // 次のステップに進む
+    function nextStep() {
+      if (currentStepIndex < stepsArr.length - 1) {
+        currentStepIndex++;
+        renderArray(stepsArr[currentStepIndex]);
+      } else {
+        stopAnimation();
+      }
+    }
+    
+    // アニメーションのトグル
+    function togglePlay() {
+      if (isPlaying) {
+        stopAnimation();
+      } else {
+        startAnimation();
+      }
+    }
+    
+    // アニメーションを開始
+    function startAnimation() {
+      if (currentStepIndex >= stepsArr.length - 1) {
+        resetAnimation();
+      }
+      
+      isPlaying = true;
+      playBtn.textContent = "一時停止";
+      animationInterval = setInterval(() => {
+        if (currentStepIndex < stepsArr.length - 1) {
+          nextStep();
+        } else {
+          stopAnimation();
+        }
+      }, 700);
+    }
+    
+    // アニメーションを停止
+    function stopAnimation() {
+      isPlaying = false;
+      playBtn.textContent = "アニメーション実行";
+      clearInterval(animationInterval);
+    }
+    
+    // アニメーションをリセット
+    function resetAnimation() {
+      stopAnimation();
+      initializeArray();
+      prepareAnimationSteps();
+      currentStepIndex = 0;
+      renderArray(stepsArr[0]);
+    }
+  </script>
+</body>
+</html>

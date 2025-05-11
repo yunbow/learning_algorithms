@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ヒープソートの図解</title>
+    <link rel="stylesheet" href="./../../../styles.css">
+    <style>        
+        .visualization-container {
+            height: 500px;
+            padding: 20px;
+            position: relative;
+        }
+        
+        .array-container {
+            display: flex;
+            justify-content: center;
+            margin-top: 20px;
+            height: 200px;
+            align-items: flex-end;
+        }
+        
+        .array-bar {
+            width: 40px;
+            background-color: #3498db;
+            margin: 0 5px;
+            border-radius: 3px 3px 0 0;
+            position: relative;
+            transition: height 0.5s, background-color 0.5s;
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
+            padding-bottom: 5px;
+            color: white;
+            font-weight: bold;
+        }
+        
+        .array-bar.active {
+            background-color: #e74c3c;
+        }
+        
+        .array-bar.sorted {
+            background-color: #2ecc71;
+        }
+        
+        .array-bar.heapify {
+            background-color: #f39c12;
+        }
+        
+        .array-bar.swap {
+            background-color: #9b59b6;
+        }
+        
+        .tree-container {
+            height: 250px;
+            position: relative;
+            margin-top: 20px;
+        }
+        
+        .tree-node {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: #3498db;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            position: absolute;
+            transition: all 0.5s;
+        }
+        
+        .tree-node.active {
+            background-color: #e74c3c;
+        }
+        
+        .tree-node.heapify {
+            background-color: #f39c12;
+        }
+        
+        .tree-edge {
+            position: absolute;
+            background-color: #95a5a6;
+            height: 2px;
+            transform-origin: 0 0;
+            transition: all 0.5s;
+        }
+        
+        .description {
+            margin-top: 20px;
+            padding: 10px;
+            border-radius: 4px;
+            background-color: #f8f9fa;
+            border-left: 4px solid #3498db;
+            font-size: 16px;
+            line-height: 1.5;
+        }
+    </style>
+</head>
+<body>
+    <ul class="breadcrumb">
+        <li><a href="./../../../">アルゴリズムの学習</a></li>
+        <li><a href="./../../">配列の並べ替え問題</a></li>
+        <li><a href="./../">ヒープソート</a></li>
+        <li>図解</li>
+    </ul>
+
+    <div class="container">
+        <h1>ヒープソートの図解</h1>
+    
+        <div class="controls">
+            <button id="animateBtn" class="button-success">アニメーション実行</button>
+            <button id="stepBtn" class="button-primary">ステップ実行</button>
+            <button id="clearBtn" class="button-danger">クリア</button>
+        </div>
+        
+        <div class="visualization-container">
+            <div class="tree-container" id="treeContainer"></div>
+            <div class="array-container" id="arrayContainer"></div>
+        </div>    
+
+        <div class="description" id="description">「クリア」ボタンを押して初期化してから、「アニメーション実行」または「ステップ実行」ボタンを押してください。</div>
+    </div>
+
+    <script>
+        // 初期配列
+        const initialArray = [8, 4, 6, 2, 9, 5, 7, 3, 1, 10];
+        let array = [...initialArray];
+        let treeNodes = [];
+        let treeEdges = [];
+        
+        // アニメーションの状態
+        let animationSteps = [];
+        let currentStep = 0;
+        let animationInterval = null;
+        let isAnimating = false;
+        
+        // DOM要素の取得
+        const arrayContainer = document.getElementById('arrayContainer');
+        const treeContainer = document.getElementById('treeContainer');
+        const description = document.getElementById('description');
+        const clearBtn = document.getElementById('clearBtn');
+        const animateBtn = document.getElementById('animateBtn');
+        const stepBtn = document.getElementById('stepBtn');
+        
+        // 初期化関数
+        function initialize() {
+            // 配列の表示
+            renderArray();
+            
+            // 木の表示
+            renderTree();
+            
+            // アニメーションステップの生成
+            generateAnimationSteps();
+            
+            // 説明テキストの更新
+            description.textContent = `準備完了。配列: [${array.join(', ')}]`;
+        }
+        
+        // 配列の表示関数
+        function renderArray() {
+            arrayContainer.innerHTML = '';
+            
+            array.forEach((value, index) => {
+                const bar = document.createElement('div');
+                bar.className = 'array-bar';
+                bar.style.height = `${value * 15}px`;
+                bar.textContent = value;
+                bar.id = `bar-${index}`;
+                arrayContainer.appendChild(bar);
+            });
+        }
+        
+        // 木の表示関数
+        function renderTree() {
+            treeContainer.innerHTML = '';
+            treeNodes = [];
+            treeEdges = [];
+            
+            // 根ノードの位置
+            const rootX = treeContainer.offsetWidth / 2;
+            const rootY = 40;
+            const horizontalSpacing = 80;
+            const verticalSpacing = 70;
+            
+            // ノードとエッジの作成
+            for (let i = 0; i < array.length; i++) {
+                const depth = Math.floor(Math.log2(i + 1));
+                const position = i + 1 - Math.pow(2, depth);
+                const totalNodesAtDepth = Math.pow(2, depth);
+                const parentIndex = i === 0 ? -1 : Math.floor((i - 1) / 2);
+                
+                // ノードのx座標計算
+                const x = rootX + (position - totalNodesAtDepth / 2 + 0.5) * horizontalSpacing * (2 / (depth + 1));
+                const y = rootY + depth * verticalSpacing;
+                
+                // ノードの作成
+                const node = document.createElement('div');
+                node.className = 'tree-node';
+                node.style.left = `${x}px`;
+                node.style.top = `${y}px`;
+                node.textContent = array[i];
+                node.id = `node-${i}`;
+                treeContainer.appendChild(node);
+                
+                treeNodes.push({ node, x, y, index: i });
+                
+                // 親ノードへのエッジを作成
+                if (parentIndex >= 0) {
+                    const parentNode = treeNodes[parentIndex];
+                    const dx = x - parentNode.x;
+                    const dy = y - parentNode.y;
+                    const length = Math.sqrt(dx * dx + dy * dy);
+                    const angle = Math.atan2(dy, dx) * 180 / Math.PI;
+                    
+                    const edge = document.createElement('div');
+                    edge.className = 'tree-edge';
+                    edge.style.width = `${length}px`;
+                    edge.style.left = `${parentNode.x + 20}px`;
+                    edge.style.top = `${parentNode.y + 20}px`;
+                    edge.style.transform = `rotate(${angle}deg)`;
+                    edge.id = `edge-${parentIndex}-${i}`;
+                    treeContainer.appendChild(edge);
+                    
+                    treeEdges.push({ edge, parent: parentIndex, child: i });
+                }
+            }
+        }
+        
+        // アニメーションステップの生成
+        function generateAnimationSteps() {
+            animationSteps = [];
+            let workingArray = [...array];
+            
+            // ステップ0: 初期状態
+            animationSteps.push({
+                array: [...workingArray],
+                description: `初期配列: [${workingArray.join(', ')}]`,
+                highlightedNodes: [],
+                highlightedBars: [],
+                specialNodes: [],
+                specialBars: []
+            });
+            
+            // ビルドヒープ（最大ヒープ）フェーズ
+            // ステップ1: ヒープ化の開始説明
+            animationSteps.push({
+                array: [...workingArray],
+                description: `最大ヒープを構築します。最初の非葉ノードから開始します。`,
+                highlightedNodes: [],
+                highlightedBars: [],
+                specialNodes: [],
+                specialBars: []
+            });
+            
+            // 最初の非葉ノードのインデックスを取得 (n/2-1)
+            const startIdx = Math.floor(workingArray.length / 2) - 1;
+            
+            // 非葉ノードを順に処理して最大ヒープを構築
+            for (let i = startIdx; i >= 0; i--) {
+                animationSteps.push({
+                    array: [...workingArray],
+                    description: `ノード${workingArray[i]}を含む部分木をヒープ化します。`,
+                    highlightedNodes: [i],
+                    highlightedBars: [i],
+                    specialNodes: [],
+                    specialBars: []
+                });
+                
+                // ヒープ化の処理
+                let currentIdx = i;
+                let largest = currentIdx;
+                
+                // サブステップ：子ノードの比較
+                const leftChild = 2 * currentIdx + 1;
+                const rightChild = 2 * currentIdx + 2;
+                
+                // 左の子と比較
+                if (leftChild < workingArray.length) {
+                    animationSteps.push({
+                        array: [...workingArray],
+                        description: `ノード${workingArray[currentIdx]}と左の子ノード${workingArray[leftChild]}を比較します。`,
+                        highlightedNodes: [currentIdx, leftChild],
+                        highlightedBars: [currentIdx, leftChild],
+                        specialNodes: [],
+                        specialBars: []
+                    });
+                    
+                    if (workingArray[leftChild] > workingArray[largest]) {
+                        largest = leftChild;
+                        animationSteps.push({
+                            array: [...workingArray],
+                            description: `左の子ノード${workingArray[leftChild]}の方が大きいため、最大値を更新します。`,
+                            highlightedNodes: [currentIdx],
+                            highlightedBars: [currentIdx],
+                            specialNodes: [leftChild],
+                            specialBars: [leftChild]
+                        });
+                    }
+                }
+                
+                // 右の子と比較
+                if (rightChild < workingArray.length) {
+                    animationSteps.push({
+                        array: [...workingArray],
+                        description: `現在の最大値${workingArray[largest]}と右の子ノード${workingArray[rightChild]}を比較します。`,
+                        highlightedNodes: [largest, rightChild],
+                        highlightedBars: [largest, rightChild],
+                        specialNodes: [],
+                        specialBars: []
+                    });
+                    
+                    if (workingArray[rightChild] > workingArray[largest]) {
+                        largest = rightChild;
+                        animationSteps.push({
+                            array: [...workingArray],
+                            description: `右の子ノード${workingArray[rightChild]}の方が大きいため、最大値を更新します。`,
+                            highlightedNodes: [currentIdx],
+                            highlightedBars: [currentIdx],
+                            specialNodes: [rightChild],
+                            specialBars: [rightChild]
+                        });
+                    }
+                }
+                
+                // 最大値が現在のノードでない場合、交換
+                if (largest !== currentIdx) {
+                    animationSteps.push({
+                        array: [...workingArray],
+                        description: `ノード${workingArray[currentIdx]}とノード${workingArray[largest]}を交換します。`,
+                        highlightedNodes: [currentIdx, largest],
+                        highlightedBars: [currentIdx, largest],
+                        specialNodes: [],
+                        specialBars: [],
+                        swap: true
+                    });
+                    
+                    // 実際の交換
+                    [workingArray[currentIdx], workingArray[largest]] = [workingArray[largest], workingArray[currentIdx]];
+                    
+                    animationSteps.push({
+                        array: [...workingArray],
+                        description: `交換後、部分木を更新します。`,
+                        highlightedNodes: [],
+                        highlightedBars: [],
+                        specialNodes: [currentIdx, largest],
+                        specialBars: [currentIdx, largest]
+                    });
+                    
+                    // 子ノードとの交換があった場合、さらに下の部分木を修正
+                    let newCurrentIdx = largest;
+                    while (true) {
+                        let newLargest = newCurrentIdx;
+                        const newLeftChild = 2 * newCurrentIdx + 1;
+                        const newRightChild = 2 * newCurrentIdx + 2;
+                        
+                        if (newLeftChild < workingArray.length && workingArray[newLeftChild] > workingArray[newLargest]) {
+                            newLargest = newLeftChild;
+                        }
+                        
+                        if (newRightChild < workingArray.length && workingArray[newRightChild] > workingArray[newLargest]) {
+                            newLargest = newRightChild;
+                        }
+                        
+                        if (newLargest !== newCurrentIdx) {
+                            animationSteps.push({
+                                array: [...workingArray],
+                                description: `さらに下の部分木で、ノード${workingArray[newCurrentIdx]}とノード${workingArray[newLargest]}を交換します。`,
+                                highlightedNodes: [newCurrentIdx, newLargest],
+                                highlightedBars: [newCurrentIdx, newLargest],
+                                specialNodes: [],
+                                specialBars: [],
+                                swap: true
+                            });
+                            
+                            [workingArray[newCurrentIdx], workingArray[newLargest]] = [workingArray[newLargest], workingArray[newCurrentIdx]];
+                            
+                            animationSteps.push({
+                                array: [...workingArray],
+                                description: `交換後、部分木を更新します。`,
+                                highlightedNodes: [],
+                                highlightedBars: [],
+                                specialNodes: [newCurrentIdx, newLargest],
+                                specialBars: [newCurrentIdx, newLargest]
+                            });
+                            
+                            newCurrentIdx = newLargest;
+                        } else {
+                            break;
+                        }
+                    }
+                }
+            }
+            
+            // 最大ヒープの構築完了
+            animationSteps.push({
+                array: [...workingArray],
+                description: `最大ヒープの構築が完了しました。ルートには最大値${workingArray[0]}があります。`,
+                highlightedNodes: [0],
+                highlightedBars: [0],
+                specialNodes: [],
+                specialBars: [],
+                heapComplete: true
+            });
+            
+            // ヒープソートフェーズ
+            let heapSize = workingArray.length;
+            for (let i = workingArray.length - 1; i > 0; i--) {
+                animationSteps.push({
+                    array: [...workingArray],
+                    description: `ルートの最大値${workingArray[0]}を末尾の要素${workingArray[i]}と交換します。`,
+                    highlightedNodes: [0, i],
+                    highlightedBars: [0, i],
+                    specialNodes: [],
+                    specialBars: [],
+                    swap: true
+                });
+                
+                // ルートと末尾を交換
+                [workingArray[0], workingArray[i]] = [workingArray[i], workingArray[0]];
+                
+                animationSteps.push({
+                    array: [...workingArray],
+                    description: `要素${workingArray[i]}はソート済みになりました。`,
+                    highlightedNodes: [0],
+                    highlightedBars: [0],
+                    specialNodes: [],
+                    specialBars: [],
+                    sortedIndices: Array.from({ length: workingArray.length - i }, (_, idx) => workingArray.length - 1 - idx)
+                });
+                
+                // ヒープサイズを減らす
+                heapSize--;
+                
+                // ルートから始めて再度ヒープ化
+                let currentIdx = 0;
+                
+                while (true) {
+                    let largest = currentIdx;
+                    const leftChild = 2 * currentIdx + 1;
+                    const rightChild = 2 * currentIdx + 2;
+                    
+                    // 左の子と比較（ヒープサイズ内のみ）
+                    if (leftChild < heapSize) {
+                        animationSteps.push({
+                            array: [...workingArray],
+                            description: `ノード${workingArray[currentIdx]}と左の子ノード${workingArray[leftChild]}を比較します。`,
+                            highlightedNodes: [currentIdx, leftChild],
+                            highlightedBars: [currentIdx, leftChild],
+                            specialNodes: [],
+                            specialBars: [],
+                            sortedIndices: Array.from({ length: workingArray.length - heapSize }, (_, idx) => workingArray.length - 1 - idx)
+                        });
+                        
+                        if (workingArray[leftChild] > workingArray[largest]) {
+                            largest = leftChild;
+                            animationSteps.push({
+                                array: [...workingArray],
+                                description: `左の子ノード${workingArray[leftChild]}の方が大きいため、最大値を更新します。`,
+                                highlightedNodes: [currentIdx],
+                                highlightedBars: [currentIdx],
+                                specialNodes: [leftChild],
+                                specialBars: [leftChild],
+                                sortedIndices: Array.from({ length: workingArray.length - heapSize }, (_, idx) => workingArray.length - 1 - idx)
+                            });
+                        }
+                    }
+                    
+                    // 右の子と比較（ヒープサイズ内のみ）
+                    if (rightChild < heapSize) {
+                        animationSteps.push({
+                            array: [...workingArray],
+                            description: `現在の最大値${workingArray[largest]}と右の子ノード${workingArray[rightChild]}を比較します。`,
+                            highlightedNodes: [largest, rightChild],
+                            highlightedBars: [largest, rightChild],
+                            specialNodes: [],
+                            specialBars: [],
+                            sortedIndices: Array.from({ length: workingArray.length - heapSize }, (_, idx) => workingArray.length - 1 - idx)
+                        });
+                        
+                        if (workingArray[rightChild] > workingArray[largest]) {
+                            largest = rightChild;
+                            animationSteps.push({
+                                array: [...workingArray],
+                                description: `右の子ノード${workingArray[rightChild]}の方が大きいため、最大値を更新します。`,
+                                highlightedNodes: [currentIdx],
+                                highlightedBars: [currentIdx],
+                                specialNodes: [rightChild],
+                                specialBars: [rightChild],
+                                sortedIndices: Array.from({ length: workingArray.length - heapSize }, (_, idx) => workingArray.length - 1 - idx)
+                            });
+                        }
+                    }
+                    
+                    // 最大値が現在のノードでない場合、交換
+                    if (largest !== currentIdx) {
+                        animationSteps.push({
+                            array: [...workingArray],
+                            description: `ノード${workingArray[currentIdx]}とノード${workingArray[largest]}を交換します。`,
+                            highlightedNodes: [currentIdx, largest],
+                            highlightedBars: [currentIdx, largest],
+                            specialNodes: [],
+                            specialBars: [],
+                            swap: true,
+                            sortedIndices: Array.from({ length: workingArray.length - heapSize }, (_, idx) => workingArray.length - 1 - idx)
+                        });
+                        
+                        [workingArray[currentIdx], workingArray[largest]] = [workingArray[largest], workingArray[currentIdx]];
+                        
+                        animationSteps.push({
+                            array: [...workingArray],
+                            description: `交換後、部分木を更新します。`,
+                            highlightedNodes: [],
+                            highlightedBars: [],
+                            specialNodes: [currentIdx, largest],
+                            specialBars: [currentIdx, largest],
+                            sortedIndices: Array.from({ length: workingArray.length - heapSize }, (_, idx) => workingArray.length - 1 - idx)
+                        });
+                        
+                        currentIdx = largest;
+                    } else {
+                        break;
+                    }
+                }
+            }
+            
+            // ソート完了
+            animationSteps.push({
+                array: [...workingArray],
+                description: `ヒープソートが完了しました。配列はソート済みです: [${workingArray.join(', ')}]`,
+                highlightedNodes: [],
+                highlightedBars: [],
+                specialNodes: [],
+                specialBars: [],
+                sortedIndices: Array.from({ length: workingArray.length }, (_, idx) => idx)
+            });
+        }
+        
+        // アニメーションステップを適用する関数
+        function applyAnimationStep(step) {
+            // 説明テキストの更新
+            description.textContent = step.description;
+            
+            // すべてのノードとバーのハイライトをリセット
+            treeNodes.forEach(node => {
+                node.node.classList.remove('active', 'heapify', 'swap');
+            });
+            
+            document.querySelectorAll('.array-bar').forEach(bar => {
+                bar.classList.remove('active', 'heapify', 'swap', 'sorted');
+            });
+            
+            // 配列の更新
+            step.array.forEach((value, index) => {
+                const bar = document.getElementById(`bar-${index}`);
+                const node = document.getElementById(`node-${index}`);
+                
+                if (bar) {
+                    bar.style.height = `${value * 15}px`;
+                    bar.textContent = value;
+                }
+                
+                if (node) {
+                    node.textContent = value;
+                }
+            });
+            
+            // ハイライトされたノード
+            step.highlightedNodes.forEach(index => {
+                const node = document.getElementById(`node-${index}`);
+                if (node) node.classList.add('active');
+            });
+            
+            // ハイライトされたバー
+            step.highlightedBars.forEach(index => {
+                const bar = document.getElementById(`bar-${index}`);
+                if (bar) bar.classList.add('active');
+            });
+            
+            // 特別な状態のノード
+            step.specialNodes.forEach(index => {
+                const node = document.getElementById(`node-${index}`);
+                if (node) node.classList.add(step.swap ? 'swap' : 'heapify');
+            });
+            
+            // 特別な状態のバー
+            step.specialBars.forEach(index => {
+                const bar = document.getElementById(`bar-${index}`);
+                if (bar) bar.classList.add(step.swap ? 'swap' : 'heapify');
+            });
+            
+            // ソート済みのインデックス
+            if (step.sortedIndices) {
+                step.sortedIndices.forEach(index => {
+                    const bar = document.getElementById(`bar-${index}`);
+                    if (bar) bar.classList.add('sorted');
+                });
+            }
+        }
+        
+        // クリアボタンのクリックイベント
+        clearBtn.addEventListener('click', () => {
+            // アニメーションの停止
+            if (animationInterval) {
+                clearInterval(animationInterval);
+                animationInterval = null;
+            }
+            
+            isAnimating = false;
+            animateBtn.textContent = 'アニメーション実行';
+            
+            // 配列を初期状態に戻す
+            array = [...initialArray];
+            currentStep = 0;
+            
+            // UIの更新
+            initialize();
+        });
+        
+        // アニメーション実行ボタンのクリックイベント
+        animateBtn.addEventListener('click', () => {
+            if (isAnimating) {
+                // アニメーションの一時停止
+                clearInterval(animationInterval);
+                animationInterval = null;
+                isAnimating = false;
+                animateBtn.textContent = 'アニメーション実行';
+            } else {
+                // アニメーションの開始/再開
+                isAnimating = true;
+                animateBtn.textContent = '一時停止';
+                
+                animationInterval = setInterval(() => {
+                    if (currentStep < animationSteps.length) {
+                        applyAnimationStep(animationSteps[currentStep]);
+                        currentStep++;
+                    } else {
+                        // アニメーション終了
+                        clearInterval(animationInterval);
+                        animationInterval = null;
+                        isAnimating = false;
+                        animateBtn.textContent = 'アニメーション実行';
+                    }
+                }, 1000); // 1秒間隔でアニメーション
+            }
+        });
+        
+        // ステップ実行ボタンのクリックイベント
+        stepBtn.addEventListener('click', () => {
+            // 一時停止中であれば次のステップを実行
+            if (!isAnimating && currentStep < animationSteps.length) {
+                applyAnimationStep(animationSteps[currentStep]);
+                currentStep++;
+            }
+        });
+        
+        // 初期化
+        initialize();
+    </script>
+</body>
+</html>

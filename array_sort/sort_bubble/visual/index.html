@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>バブルソートの図解</title>
+    <link rel="stylesheet" href="./../../../styles.css">
+    <style>
+        .array-container {
+            display: flex;
+            justify-content: center;
+            margin: 30px 0;
+            height: 300px;
+            align-items: flex-end;
+        }
+        .array-bar {
+            margin: 0 5px;
+            transition: height 0.3s ease, background-color 0.3s ease;
+            background-color: #3498db;
+            width: 40px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            font-weight: bold;
+            position: relative;
+        }
+        .comparing {
+            background-color: #f39c12;
+        }
+        .sorted {
+            background-color: #2ecc71;
+        }
+        .swapping {
+            background-color: #e74c3c;
+        }
+        button:disabled {
+            background-color: #bdc3c7;
+            cursor: not-allowed;
+        }
+        .status {
+            text-align: center;
+            margin: 15px 0;
+            font-size: 18px;
+            height: 24px;
+        }
+        .step-info {
+            text-align: center;
+            margin: 15px 0;
+            padding: 10px;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+            border-left: 4px solid #3498db;
+        }
+    </style>
+</head>
+<body>
+    <ul class="breadcrumb">
+        <li><a href="./../../../">アルゴリズムの学習</a></li>
+        <li><a href="./../../">配列の並べ替え問題</a></li>
+        <li><a href="./../">バブルソート</a></li>
+        <li>図解</li>
+    </ul>
+
+    <div class="container">
+        <h1>バブルソートの図解</h1>
+        
+        <div class="controls">
+            <button id="animateBtn" class="button-success">アニメーション実行</button>
+            <button id="stepBtn" class="button-primary">ステップ実行</button>
+            <button id="clearBtn" class="button-danger">クリア</button>
+        </div>
+        
+        <div class="array-container" id="arrayContainer"></div>
+
+        <div class="status" id="status"></div>
+        <div class="step-info" id="stepInfo">初期状態</div>
+        </div>
+
+    <script>
+        // 初期配列
+        let array = [8, 4, 6, 2, 9, 5, 7, 3, 1, 10];
+        let initialArray = [...array];
+        let animationState = {
+            isRunning: false,
+            isPaused: false,
+            currentStep: 0,
+            totalSteps: 0,
+            intervalId: null,
+            steps: []
+        };
+
+        // DOM要素
+        const arrayContainer = document.getElementById('arrayContainer');
+        const clearBtn = document.getElementById('clearBtn');
+        const animateBtn = document.getElementById('animateBtn');
+        const stepBtn = document.getElementById('stepBtn');
+        const status = document.getElementById('status');
+        const stepInfo = document.getElementById('stepInfo');
+
+        // 配列の表示を初期化
+        function initializeArray() {
+            arrayContainer.innerHTML = '';
+            array.forEach((value, index) => {
+                const bar = document.createElement('div');
+                bar.className = 'array-bar';
+                bar.style.height = `${value * 30}px`;
+                bar.textContent = value;
+                bar.id = `bar-${index}`;
+                arrayContainer.appendChild(bar);
+            });
+        }
+
+        // バブルソートのステップを計算
+        function calculateBubbleSortSteps(arr) {
+            const steps = [];
+            const len = arr.length;
+            const copyArr = [...arr];
+            
+            for (let i = 0; i < len; i++) {
+                for (let j = 0; j < len - i - 1; j++) {
+                    // 比較ステップ
+                    steps.push({
+                        type: 'compare',
+                        indices: [j, j + 1],
+                        description: `要素 ${copyArr[j]} と ${copyArr[j + 1]} を比較`
+                    });
+                    
+                    if (copyArr[j] > copyArr[j + 1]) {
+                        // 交換ステップ
+                        steps.push({
+                            type: 'swap',
+                            indices: [j, j + 1],
+                            description: `${copyArr[j]} > ${copyArr[j + 1]} なので交換`
+                        });
+                        
+                        // 実際に交換
+                        [copyArr[j], copyArr[j + 1]] = [copyArr[j + 1], copyArr[j]];
+                    } else {
+                        steps.push({
+                            type: 'no-swap',
+                            indices: [j, j + 1],
+                            description: `${copyArr[j]} <= ${copyArr[j + 1]} なので交換しない`
+                        });
+                    }
+                }
+                
+                // この位置にソート済み要素をマーク
+                steps.push({
+                    type: 'sorted',
+                    index: len - i - 1,
+                    description: `要素 ${copyArr[len - i - 1]} がソート済み`
+                });
+            }
+            
+            // 全てソート完了
+            steps.push({
+                type: 'complete',
+                description: 'ソート完了！'
+            });
+            
+            return steps;
+        }
+
+        // 単一ステップのアニメーション
+        function animateStep(step) {
+            // 全バーの状態をリセット
+            document.querySelectorAll('.array-bar').forEach(bar => {
+                if (!bar.classList.contains('sorted')) {
+                    bar.className = 'array-bar';
+                }
+            });
+            
+            stepInfo.textContent = step.description;
+            
+            if (step.type === 'compare' || step.type === 'no-swap') {
+                step.indices.forEach(index => {
+                    document.getElementById(`bar-${index}`).classList.add('comparing');
+                });
+            } else if (step.type === 'swap') {
+                step.indices.forEach(index => {
+                    document.getElementById(`bar-${index}`).classList.add('swapping');
+                });
+                
+                // 実際にDOM上で値を交換
+                const bar1 = document.getElementById(`bar-${step.indices[0]}`);
+                const bar2 = document.getElementById(`bar-${step.indices[1]}`);
+                
+                const tempHeight = bar1.style.height;
+                const tempText = bar1.textContent;
+                
+                bar1.style.height = bar2.style.height;
+                bar1.textContent = bar2.textContent;
+                
+                bar2.style.height = tempHeight;
+                bar2.textContent = tempText;
+                
+                // 配列の値も更新
+                [array[step.indices[0]], array[step.indices[1]]] = 
+                [array[step.indices[1]], array[step.indices[0]]];
+            } else if (step.type === 'sorted') {
+                document.getElementById(`bar-${step.index}`).classList.add('sorted');
+            } else if (step.type === 'complete') {
+                document.querySelectorAll('.array-bar').forEach(bar => {
+                    bar.classList.add('sorted');
+                });
+                animationState.isRunning = false;
+                animateBtn.textContent = 'アニメーション実行';
+                clearInterval(animationState.intervalId);
+            }
+        }
+
+        // 連続アニメーションの実行/一時停止
+        function toggleAnimation() {
+            if (!animationState.isRunning) {
+                // アニメーション開始
+                animationState.isRunning = true;
+                animateBtn.textContent = '一時停止';
+                
+                animationState.intervalId = setInterval(() => {
+                    if (animationState.currentStep < animationState.steps.length) {
+                        animateStep(animationState.steps[animationState.currentStep]);
+                        animationState.currentStep++;
+                        updateStatus();
+                    } else {
+                        clearInterval(animationState.intervalId);
+                        animationState.isRunning = false;
+                        animateBtn.textContent = 'アニメーション実行';
+                    }
+                }, 800);
+            } else {
+                // アニメーション一時停止
+                clearInterval(animationState.intervalId);
+                animationState.isRunning = false;
+                animateBtn.textContent = 'アニメーション実行';
+            }
+        }
+
+        // 1ステップ実行
+        function stepExecution() {
+            if (animationState.isRunning) {
+                clearInterval(animationState.intervalId);
+                animationState.isRunning = false;
+                animateBtn.textContent = 'アニメーション実行';
+            }
+            
+            if (animationState.currentStep < animationState.steps.length) {
+                animateStep(animationState.steps[animationState.currentStep]);
+                animationState.currentStep++;
+                updateStatus();
+            }
+        }
+
+        // ステータス表示の更新
+        function updateStatus() {
+            status.textContent = `ステップ: ${animationState.currentStep} / ${animationState.steps.length}`;
+        }
+
+        // リセット処理
+        function reset() {
+            if (animationState.isRunning) {
+                clearInterval(animationState.intervalId);
+                animationState.isRunning = false;
+                animateBtn.textContent = 'アニメーション実行';
+            }
+            
+            array = [...initialArray];
+            animationState.currentStep = 0;
+            initializeArray();
+            animationState.steps = calculateBubbleSortSteps(array);
+            animationState.totalSteps = animationState.steps.length;
+            
+            status.textContent = `ステップ: 0 / ${animationState.steps.length}`;
+            stepInfo.textContent = '初期状態';
+        }
+
+        // イベントリスナー
+        clearBtn.addEventListener('click', reset);
+        animateBtn.addEventListener('click', toggleAnimation);
+        stepBtn.addEventListener('click', stepExecution);
+
+        // 初期化
+        window.onload = () => {
+            initializeArray();
+            animationState.steps = calculateBubbleSortSteps(array);
+            animationState.totalSteps = animationState.steps.length;
+            updateStatus();
+        };
+    </script>
+</body>
+</html>

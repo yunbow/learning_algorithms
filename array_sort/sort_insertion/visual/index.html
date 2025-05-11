@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>挿入ソートの図解</title>
+  <link rel="stylesheet" href="./../../../styles.css">
+  <style>
+    .array-container {
+      display: flex;
+      justify-content: center;
+      margin: 30px 0;
+      height: 300px;
+      align-items: flex-end;
+    }
+    .array-bar {
+      width: 40px;
+      margin: 0 5px;
+      background-color: #4285f4;
+      transition: height 0.3s ease, background-color 0.3s ease;
+      display: flex;
+      justify-content: center;
+      align-items: flex-end;
+      color: white;
+      font-weight: bold;
+      padding-bottom: 5px;
+      position: relative;
+    }
+    .array-bar.current {
+      background-color: #ea4335;
+    }
+    .array-bar.sorted {
+      background-color: #34a853;
+    }
+    .array-bar.comparing {
+      background-color: #fbbc05;
+    }
+    button:disabled {
+      background-color: #cccccc;
+      cursor: not-allowed;
+    }
+    #clear {
+      background-color: #ea4335;
+    }
+    #clear:hover {
+      background-color: #d32f2f;
+    }
+    .status {
+      margin-top: 20px;
+      padding: 10px;
+      background-color: #e8f0fe;
+      border-radius: 4px;
+      color: #333;
+      min-height: 50px;
+    }
+    .arrow {
+      position: absolute;
+      bottom: -25px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 0;
+      height: 0;
+      border-left: 8px solid transparent;
+      border-right: 8px solid transparent;
+      border-bottom: 12px solid black;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+    .array-bar.current .arrow {
+      opacity: 1;
+    }
+  </style>
+</head>
+<body>
+  <ul class="breadcrumb">
+    <li><a href="./../../../">アルゴリズムの学習</a></li>
+    <li><a href="./../../">配列の並べ替え問題</a></li>
+    <li><a href="./../">挿入ソート</a></li>
+    <li>図解</li>
+  </ul>
+
+  <div class="container">
+    <h1>挿入ソートの図解</h1>
+    
+    <div class="controls">
+      <button id="animate" class="button-success">アニメーション実行</button>
+      <button id="step" class="button-primary">ステップ実行</button>
+      <button id="clear" class="button-danger">クリア</button>
+    </div>
+    
+    <div class="array-container" id="array-container"></div>
+    
+    <div class="status" id="status">
+      クリアボタンを押して初期化してください。
+    </div>
+  </div>
+
+  <script>
+    // 配列の初期データ
+    let arrayData = [8, 4, 6, 2, 9, 5, 7, 3, 1, 10];
+    let originalArray = [...arrayData];
+    
+    // アニメーションの状態を管理する変数
+    let animationSteps = [];
+    let currentStep = -1;
+    let animationInterval = null;
+    let isAnimating = false;
+    
+    // HTML要素の参照
+    const arrayContainer = document.getElementById('array-container');
+    const statusElement = document.getElementById('status');
+    const clearButton = document.getElementById('clear');
+    const animateButton = document.getElementById('animate');
+    const stepButton = document.getElementById('step');
+    
+    // 初期化関数
+    function initialize() {
+      // 配列を元に戻す
+      arrayData = [...originalArray];
+      
+      // アニメーションステップを生成
+      generateAnimationSteps();
+      
+      // UIを初期状態に戻す
+      currentStep = -1;
+      isAnimating = false;
+      if (animationInterval) {
+        clearInterval(animationInterval);
+        animationInterval = null;
+      }
+      
+      // ボタンテキストを更新
+      animateButton.textContent = "アニメーション実行";
+      
+      // 配列を描画
+      renderArray();
+      
+      statusElement.textContent = "配列が初期化されました。アニメーション実行またはステップ実行ボタンを押してください。";
+    }
+    
+    // 挿入ソートのアニメーションステップを生成する関数
+    function generateAnimationSteps() {
+      animationSteps = [];
+      const arr = [...arrayData];
+      
+      // 最初の要素は既にソート済みとみなす
+      animationSteps.push({
+        array: [...arr],
+        currentIndex: 1,
+        compareIndex: null,
+        sorted: [0],
+        status: "最初の要素は既にソート済みとみなします。2番目の要素から処理を開始します。"
+      });
+      
+      // 挿入ソートのアルゴリズム
+      for (let i = 1; i < arr.length; i++) {
+        let currentVal = arr[i];
+        
+        // ステップ：現在の要素を選択
+        animationSteps.push({
+          array: [...arr],
+          currentIndex: i,
+          compareIndex: null,
+          sorted: [...Array(i).keys()],
+          status: `インデックス ${i} の要素 ${currentVal} を取り出し、適切な位置に挿入します。`
+        });
+        
+        let j = i - 1;
+        
+        while (j >= 0 && arr[j] > currentVal) {
+          // ステップ：比較
+          animationSteps.push({
+            array: [...arr],
+            currentIndex: i,
+            compareIndex: j,
+            sorted: [...Array(i).keys()],
+            status: `${arr[j]} > ${currentVal} なので、${arr[j]} を右に移動します。`
+          });
+          
+          // 要素を右に移動
+          arr[j + 1] = arr[j];
+          
+          // ステップ：移動後
+          animationSteps.push({
+            array: [...arr],
+            currentIndex: j,
+            compareIndex: null,
+            sorted: [...Array(i).keys()],
+            status: `${arr[j]} を右に移動しました。次の要素と比較します。`
+          });
+          
+          j--;
+        }
+        
+        // 適切な位置に挿入
+        arr[j + 1] = currentVal;
+        
+        // ステップ：挿入完了
+        const sortedIndices = [...Array(i + 1).keys()];
+        animationSteps.push({
+          array: [...arr],
+          currentIndex: j + 1,
+          compareIndex: null,
+          sorted: sortedIndices,
+          status: `要素 ${currentVal} をインデックス ${j + 1} の位置に挿入しました。`
+        });
+      }
+      
+      // ソート完了
+      animationSteps.push({
+        array: [...arr],
+        currentIndex: null,
+        compareIndex: null,
+        sorted: [...Array(arr.length).keys()],
+        status: "挿入ソートが完了しました！"
+      });
+    }
+    
+    // 配列を描画する関数
+    function renderArray(step = null) {
+      // 配列コンテナをクリア
+      arrayContainer.innerHTML = '';
+      
+      // ステップが指定されていない場合は初期配列を表示
+      const arrayToRender = step ? step.array : arrayData;
+      const maxValue = Math.max(...originalArray);
+      
+      // 各要素をバーとして描画
+      arrayToRender.forEach((value, index) => {
+        const bar = document.createElement('div');
+        bar.className = 'array-bar';
+        
+        // バーの高さを設定（最大値に対する割合）
+        const heightPercentage = (value / maxValue) * 80;
+        bar.style.height = `${heightPercentage}%`;
+        
+        // 値を表示
+        bar.textContent = value;
+        
+        // ステップに基づいてスタイルを適用
+        if (step) {
+          if (index === step.currentIndex) {
+            bar.classList.add('current');
+            
+            // 矢印を追加
+            const arrow = document.createElement('div');
+            arrow.className = 'arrow';
+            bar.appendChild(arrow);
+          }
+          if (index === step.compareIndex) {
+            bar.classList.add('comparing');
+          }
+          if (step.sorted && step.sorted.includes(index)) {
+            bar.classList.add('sorted');
+          }
+        }
+        
+        arrayContainer.appendChild(bar);
+      });
+      
+      // ステータスを更新
+      if (step) {
+        statusElement.textContent = step.status;
+      }
+    }
+    
+    // ステップを進める関数
+    function nextStep() {
+      if (currentStep < animationSteps.length - 1) {
+        currentStep++;
+        renderArray(animationSteps[currentStep]);
+        
+        // 最後のステップに到達したらアニメーションを停止
+        if (currentStep === animationSteps.length - 1) {
+          if (animationInterval) {
+            clearInterval(animationInterval);
+            animationInterval = null;
+          }
+          isAnimating = false;
+          animateButton.textContent = "アニメーション実行";
+        }
+        return true;
+      }
+      return false;
+    }
+    
+    // アニメーションを開始/停止する関数
+    function toggleAnimation() {
+      if (isAnimating) {
+        // アニメーションを停止
+        if (animationInterval) {
+          clearInterval(animationInterval);
+          animationInterval = null;
+        }
+        isAnimating = false;
+        animateButton.textContent = "アニメーション実行";
+      } else {
+        // 最後まで到達している場合は初期化
+        if (currentStep >= animationSteps.length - 1) {
+          initialize();
+        }
+        
+        // アニメーションを開始
+        isAnimating = true;
+        animateButton.textContent = "一時停止";
+        
+        animationInterval = setInterval(() => {
+          const hasMore = nextStep();
+          if (!hasMore) {
+            clearInterval(animationInterval);
+            animationInterval = null;
+            isAnimating = false;
+            animateButton.textContent = "アニメーション実行";
+          }
+        }, 1000);
+      }
+    }
+    
+    // イベントリスナーの設定
+    clearButton.addEventListener('click', initialize);
+    animateButton.addEventListener('click', toggleAnimation);
+    stepButton.addEventListener('click', () => {
+      if (isAnimating) {
+        // アニメーション中の場合はまず停止
+        if (animationInterval) {
+          clearInterval(animationInterval);
+          animationInterval = null;
+        }
+        isAnimating = false;
+        animateButton.textContent = "アニメーション実行";
+      }
+      
+      // 最後まで到達している場合は初期化
+      if (currentStep >= animationSteps.length - 1) {
+        initialize();
+      }
+      
+      nextStep();
+    });
+    
+    // 初期化
+    initialize();
+  </script>
+</body>
+</html>

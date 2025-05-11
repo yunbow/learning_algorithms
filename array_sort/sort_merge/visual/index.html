@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>マージソートの図解</title>
+  <link rel="stylesheet" href="./../../../styles.css">
+  <style>
+    button:disabled {
+      background-color: #cccccc;
+      cursor: not-allowed;
+    }
+    .array-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 100%;
+      margin-bottom: 20px;
+    }
+    .array-row {
+      display: flex;
+      margin: 10px 0;
+      width: 100%;
+      justify-content: center;
+    }
+    .array-element {
+      width: 40px;
+      height: 40px;
+      margin: 0 2px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 18px;
+      font-weight: bold;
+      background-color: #e0e0e0;
+      border-radius: 4px;
+      transition: all 0.3s ease;
+    }
+    .active {
+      background-color: #ff9800;
+    }
+    .comparing {
+      background-color: #f44336;
+    }
+    .sorted {
+      background-color: #4CAF50;
+    }
+    .step-info {
+      margin-top: 20px;
+      padding: 10px;
+      background-color: #f5f5f5;
+      border-radius: 4px;
+      text-align: center;
+    }
+    .array-label {
+      margin-right: 10px;
+      font-weight: bold;
+      width: 100px;
+      text-align: right;
+    }
+    .merge-step {
+      opacity: 0;
+      height: 0;
+      overflow: hidden;
+      transition: opacity 0.5s ease;
+    }
+    .merge-step.visible {
+      opacity: 1;
+      height: auto;
+      margin: 10px 0;
+    }
+    .arrow {
+      font-size: 24px;
+      margin: 10px 0;
+    }
+  </style>
+</head>
+<body>
+  <ul class="breadcrumb">
+    <li><a href="./../../../">アルゴリズムの学習</a></li>
+    <li><a href="./../../">配列の並べ替え問題</a></li>
+    <li><a href="./../">マージソート</a></li>
+    <li>図解</li>
+  </ul>
+
+  <div class="container">
+    <h1>マージソートの図解</h1>
+  
+    <div class="controls">
+      <button id="animateBtn" class="button-success">アニメーション実行</button>
+      <button id="stepBtn" class="button-primary">ステップ実行</button>
+      <button id="clearBtn" class="button-danger">クリア</button>
+    </div>
+    
+    <div class="array-container" id="arrayContainer">
+      <!-- ここにアニメーションが表示されます -->
+    </div>
+    
+    <div class="step-info" id="stepInfo">
+      初期配列を表示しています。「アニメーション実行」または「ステップ実行」ボタンを押してください。
+    </div>  
+  </div>
+
+  <script>
+    // 初期配列
+    const initialArray = [38, 27, 43, 3, 9, 82, 10];
+    let currentArray = [...initialArray];
+    let animationSteps = [];
+    let currentStepIndex = 0;
+    let animationInterval = null;
+    let isPaused = true;
+    
+    // DOM要素
+    const arrayContainer = document.getElementById('arrayContainer');
+    const stepInfo = document.getElementById('stepInfo');
+    const clearBtn = document.getElementById('clearBtn');
+    const animateBtn = document.getElementById('animateBtn');
+    const stepBtn = document.getElementById('stepBtn');
+    
+    // マージソートの実装
+    function mergeSort(arr, depth = 0, path = '') {
+      // アニメーションステップを記録する関数
+      const addStep = (type, message, highlights = [], comparing = [], sorted = []) => {
+        animationSteps.push({ 
+          type, 
+          message, 
+          array: JSON.parse(JSON.stringify(arr)),
+          depth,
+          path,
+          highlights,
+          comparing,
+          sorted
+        });
+      };
+      
+      const len = arr.length;
+      if (len <= 1) {
+        addStep('base', `サイズ 1 の配列 [${arr}] はすでにソート済みです`, [0]);
+        return arr;
+      }
+      
+      addStep('split', `配列 [${arr}] を分割します`, []);
+      
+      const mid = Math.floor(len / 2);
+      const left = arr.slice(0, mid);
+      const right = arr.slice(mid);
+      
+      addStep('divided', `左半分: [${left}], 右半分: [${right}]`, []);
+      
+      // 再帰的に左右をソート
+      const sortedLeft = mergeSort(left, depth + 1, path + 'L');
+      const sortedRight = mergeSort(right, depth + 1, path + 'R');
+      
+      // マージ処理
+      addStep('merge-start', `[${sortedLeft}] と [${sortedRight}] をマージします`, []);
+      
+      let i = 0, j = 0, k = 0;
+      const merged = new Array(sortedLeft.length + sortedRight.length);
+      
+      while (i < sortedLeft.length && j < sortedRight.length) {
+        addStep('compare', `${sortedLeft[i]} と ${sortedRight[j]} を比較します`, [], [i, sortedLeft.length + j]);
+        
+        if (sortedLeft[i] <= sortedRight[j]) {
+          merged[k] = sortedLeft[i];
+          addStep('select-left', `${sortedLeft[i]} を選択しました`, [k], [], [k]);
+          i++;
+        } else {
+          merged[k] = sortedRight[j];
+          addStep('select-right', `${sortedRight[j]} を選択しました`, [sortedLeft.length + j], [], [k]);
+          j++;
+        }
+        k++;
+      }
+      
+      // 残りの要素をコピー
+      while (i < sortedLeft.length) {
+        merged[k] = sortedLeft[i];
+        addStep('copy-left', `残りの左側の要素 ${sortedLeft[i]} をコピーします`, [i], [], [k]);
+        i++;
+        k++;
+      }
+      
+      while (j < sortedRight.length) {
+        merged[k] = sortedRight[j];
+        addStep('copy-right', `残りの右側の要素 ${sortedRight[j]} をコピーします`, [sortedLeft.length + j], [], [k]);
+        j++;
+        k++;
+      }
+      
+      addStep('merged', `マージ完了: [${merged}]`, [], [], Array.from({ length: merged.length }, (_, i) => i));
+      
+      // 元の配列を更新
+      for (let i = 0; i < merged.length; i++) {
+        arr[i] = merged[i];
+      }
+      
+      return merged;
+    }
+    
+    // アニメーションの初期化
+    function initializeAnimation() {
+      currentArray = [...initialArray];
+      animationSteps = [];
+      currentStepIndex = 0;
+      stopAnimation();
+      
+      // マージソートの実行とアニメーションステップの生成
+      const arrayCopy = [...initialArray];
+      mergeSort(arrayCopy);
+      
+      // 初期状態の表示
+      renderArrayState(initialArray, 0, [], [], []);
+      stepInfo.textContent = '初期配列を表示しています。「アニメーション実行」または「ステップ実行」ボタンを押してください。';
+      
+      // ボタンの有効化
+      animateBtn.disabled = false;
+      stepBtn.disabled = false;
+      animateBtn.textContent = 'アニメーション実行';
+    }
+    
+    // 配列の状態を描画
+    function renderArrayState(arr, depth, highlights = [], comparing = [], sorted = []) {
+      arrayContainer.innerHTML = '';
+      
+      // 最初に元の配列を表示
+      const initialRow = document.createElement('div');
+      initialRow.className = 'array-row';
+      
+      const initialLabel = document.createElement('div');
+      initialLabel.className = 'array-label';
+      initialLabel.textContent = '初期配列:';
+      initialRow.appendChild(initialLabel);
+      
+      for (let i = 0; i < initialArray.length; i++) {
+        const element = document.createElement('div');
+        element.className = 'array-element';
+        element.textContent = initialArray[i];
+        initialRow.appendChild(element);
+      }
+      
+      arrayContainer.appendChild(initialRow);
+      
+      // 現在のステップの配列を表示
+      const stepRow = document.createElement('div');
+      stepRow.className = 'array-row';
+      
+      const stepLabel = document.createElement('div');
+      stepLabel.className = 'array-label';
+      stepLabel.textContent = '現在の状態:';
+      stepRow.appendChild(stepLabel);
+      
+      for (let i = 0; i < arr.length; i++) {
+        const element = document.createElement('div');
+        element.className = 'array-element';
+        element.textContent = arr[i];
+        
+        if (sorted.includes(i)) {
+          element.classList.add('sorted');
+        } else if (comparing.includes(i)) {
+          element.classList.add('comparing');
+        } else if (highlights.includes(i)) {
+          element.classList.add('active');
+        }
+        
+        stepRow.appendChild(element);
+      }
+      
+      arrayContainer.appendChild(stepRow);
+    }
+    
+    // アニメーションステップの実行
+    function executeStep(stepIndex) {
+      if (stepIndex >= animationSteps.length) {
+        stopAnimation();
+        stepInfo.textContent = 'ソート完了！配列は整列されました。';
+        return;
+      }
+      
+      const step = animationSteps[stepIndex];
+      renderArrayState(step.array, step.depth, step.highlights, step.comparing, step.sorted);
+      stepInfo.textContent = step.message;
+      
+      currentStepIndex = stepIndex;
+      
+      // 次のステップが存在しない場合、アニメーションボタンを無効化
+      if (currentStepIndex >= animationSteps.length - 1) {
+        stepBtn.disabled = true;
+        animateBtn.disabled = true;
+        animateBtn.textContent = 'アニメーション実行';
+        isPaused = true;
+      }
+    }
+    
+    // アニメーションの開始/一時停止
+    function toggleAnimation() {
+      if (isPaused) {
+        // アニメーション開始
+        isPaused = false;
+        animateBtn.textContent = '一時停止';
+        
+        if (currentStepIndex >= animationSteps.length - 1) {
+          currentStepIndex = 0;
+        }
+        
+        animationInterval = setInterval(() => {
+          executeStep(currentStepIndex);
+          currentStepIndex++;
+          
+          if (currentStepIndex >= animationSteps.length) {
+            stopAnimation();
+          }
+        }, 1000);
+      } else {
+        // アニメーション一時停止
+        stopAnimation();
+      }
+    }
+    
+    // アニメーションの停止
+    function stopAnimation() {
+      clearInterval(animationInterval);
+      animationInterval = null;
+      isPaused = true;
+      animateBtn.textContent = 'アニメーション実行';
+    }
+    
+    // イベントリスナーの設定
+    clearBtn.addEventListener('click', initializeAnimation);
+    
+    animateBtn.addEventListener('click', toggleAnimation);
+    
+    stepBtn.addEventListener('click', () => {
+      stopAnimation();
+      executeStep(currentStepIndex);
+      currentStepIndex++;
+    });
+    
+    // 初期化
+    initializeAnimation();
+  </script>
+</body>
+</html>

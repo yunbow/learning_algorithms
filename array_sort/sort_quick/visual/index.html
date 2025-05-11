@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>クイックソートの図解</title>
+  <link rel="stylesheet" href="./../../../styles.css">
+  <style>
+    .array-container {
+      display: flex;
+      margin-bottom: 20px;
+      height: 250px;
+      align-items: flex-end;
+      padding: 10px;
+      position: relative;
+      justify-content: center
+    }
+    
+    .array-bar {
+      margin: 0 2px;
+      transition: height 0.3s, background-color 0.3s;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: bold;
+      width: 40px;
+    }
+    
+    .explanation {
+      width: 100%;
+      margin-top: 20px;
+      border-radius: 5px;
+      background-color: #f0f0f0;
+      min-height: 100px;
+    }
+    button:disabled {
+      background-color: #cccccc;
+      cursor: not-allowed;
+    }
+    
+    .pointer {
+      position: absolute;
+      bottom: -30px;
+      transform: translateX(-50%);
+      color: #333;
+      font-weight: bold;
+      font-size: 14px;
+      text-align: center;
+    }
+    
+    .pointer::before {
+      content: '↑';
+      display: block;
+      font-size: 20px;
+    }
+    
+    .pivot {
+      border: 2px solid #FF5722;
+    }
+    
+    .active {
+      background-color: #2196F3 !important;
+    }
+    
+    .compared {
+      background-color: #FFC107 !important;
+    }
+    
+    .sorted {
+      background-color: #4CAF50 !important;
+    }
+    
+    .legend {
+      display: flex;
+      gap: 15px;
+      margin-top: 15px;
+      justify-content: center;
+    }
+    
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    
+    .legend-color {
+      width: 15px;
+      height: 15px;
+      border-radius: 3px;
+    }
+    
+    .slider-container {
+      width: 100%;
+      margin-top: 15px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .slider {
+      flex-grow: 1;
+    }
+  </style>
+</head>
+<body>
+  <ul class="breadcrumb">
+    <li><a href="./../../../">アルゴリズムの学習</a></li>
+    <li><a href="./../../">配列の並べ替え問題</a></li>
+    <li><a href="./../">クイックソート</a></li>
+    <li>図解</li>
+  </ul>
+
+  <div class="container">
+    <h1>クイックソートの図解</h1>
+    <div class="array-container" id="arrayContainer"></div>
+    
+    <div class="controls">
+      <button id="animateBtn" class="button-success">アニメーション実行</button>
+      <button id="stepBtn" class="button-primary">ステップ実行</button>
+      <button id="resetBtn" class="button-danger">クリア</button>
+    </div>
+    
+    <div class="slider-container">
+      <span>速度:</span>
+      <input type="range" min="1" max="10" value="5" class="slider" id="speedSlider">
+    </div>
+    
+    <div class="explanation" id="explanation">
+      <p>「クリア」ボタンを押して配列をリセットし、「アニメーション実行」または「ステップ実行」を押してクイックソートを開始してください。</p>
+    </div>
+    
+    <div class="legend">
+      <div class="legend-item">
+        <div class="legend-color" style="background-color: #2196F3;"></div>
+        <span>現在の要素</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-color" style="background-color: #FFC107;"></div>
+        <span>比較中</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-color" style="background-color: #4CAF50;"></div>
+        <span>ソート済み</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-color" style="border: 2px solid #FF5722; width: 11px; height: 11px;"></div>
+        <span>ピボット</span>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // 配列のサイズとデータ
+    const arraySize = 10;
+    let array = [];
+    let animations = [];
+    let animationIndex = 0;
+    let animationInterval = null;
+    let isSorting = false;
+    
+    // DOM要素
+    const arrayContainer = document.getElementById('arrayContainer');
+    const resetBtn = document.getElementById('resetBtn');
+    const animateBtn = document.getElementById('animateBtn');
+    const stepBtn = document.getElementById('stepBtn');
+    const explanation = document.getElementById('explanation');
+    const speedSlider = document.getElementById('speedSlider');
+    
+    // 初期化
+    initializeArray();
+    
+    // ボタンイベント
+    resetBtn.addEventListener('click', reset);
+    animateBtn.addEventListener('click', toggleAnimation);
+    stepBtn.addEventListener('click', step);
+    speedSlider.addEventListener('input', updateSpeed);
+    
+    function initializeArray() {
+      array = [8, 4, 6, 2, 9, 5, 7, 3, 1, 10];
+      // アニメーション配列をリセット
+      animations = [];
+      animationIndex = 0;
+      
+      // クイックソートのアニメーションを生成
+      createQuicksortAnimations(array, 0, array.length - 1);
+      
+      // 配列を表示
+      renderArray();
+      
+      // 説明をリセット
+      explanation.innerHTML = '<p>「アニメーション実行」または「ステップ実行」ボタンをクリックしてクイックソートを開始してください。</p>';
+    }
+    
+    function reset() {
+      clearInterval(animationInterval);
+      animationInterval = null;
+      isSorting = false;
+      animateBtn.textContent = 'アニメーション実行';
+      
+      initializeArray();
+    }
+    
+    function renderArray(activeIndices = [], comparedIndices = [], pivotIndex = -1, sortedIndices = []) {
+      arrayContainer.innerHTML = '';
+      
+      const maxValue = Math.max(...array);
+      
+      for (let i = 0; i < array.length; i++) {
+        const height = (array[i] / maxValue) * 200;
+        const arrayBar = document.createElement('div');
+        arrayBar.className = 'array-bar';
+        arrayBar.style.height = `${height}px`;
+        arrayBar.style.backgroundColor = '#666';
+        arrayBar.textContent = array[i];
+        
+        // アクティブ、比較中、ソート済みの要素のスタイルを適用
+        if (activeIndices.includes(i)) {
+          arrayBar.classList.add('active');
+        } else if (comparedIndices.includes(i)) {
+          arrayBar.classList.add('compared');
+        } else if (sortedIndices.includes(i)) {
+          arrayBar.classList.add('sorted');
+        }
+        
+        // ピボットのスタイルを適用
+        if (i === pivotIndex) {
+          arrayBar.classList.add('pivot');
+        }
+        
+        arrayContainer.appendChild(arrayBar);
+      }
+    }
+    
+    function createQuicksortAnimations(arr, start, end) {
+      // クイックソートのアニメーションを生成する関数
+      if (start >= end) {
+        if (start === end) {
+          animations.push({
+            type: 'sorted',
+            indices: [start],
+            array: [...arr],
+            message: `インデックス ${start} の要素がソート済みになりました。`
+          });
+        }
+        return;
+      }
+      
+      let pivotIndex = partition(arr, start, end);
+      
+      // ピボットはソート済みになる
+      animations.push({
+        type: 'sorted',
+        indices: [pivotIndex],
+        array: [...arr],
+        message: `ピボット要素 ${arr[pivotIndex]} がソート済みになりました。`
+      });
+      
+      // 再帰的に左と右をソート
+      createQuicksortAnimations(arr, start, pivotIndex - 1);
+      createQuicksortAnimations(arr, pivotIndex + 1, end);
+    }
+    
+    function partition(arr, start, end) {
+      // パーティション処理のアニメーションを生成
+      const pivot = arr[end];
+      
+      animations.push({
+        type: 'pivot',
+        pivotIndex: end,
+        array: [...arr],
+        message: `ピボット要素として ${pivot} を選択しました（インデックス: ${end}）。`
+      });
+      
+      let i = start - 1;
+      
+      for (let j = start; j < end; j++) {
+        animations.push({
+          type: 'compare',
+          indices: [j, end],
+          array: [...arr],
+          message: `要素 ${arr[j]} をピボット ${pivot} と比較します。`
+        });
+        
+        if (arr[j] <= pivot) {
+          i++;
+          
+          if (i !== j) {
+            animations.push({
+              type: 'swap',
+              indices: [i, j],
+              array: [...arr],
+              message: `要素 ${arr[j]} はピボットより小さいため、インデックス ${i} と ${j} を交換します。`
+            });
+            
+            // 配列内の要素を交換
+            [arr[i], arr[j]] = [arr[j], arr[i]];
+            
+            animations.push({
+              type: 'swapped',
+              indices: [i, j],
+              array: [...arr],
+              message: `インデックス ${i} と ${j} の要素を交換しました。`
+            });
+          } else {
+            animations.push({
+              type: 'noSwap',
+              indices: [i],
+              array: [...arr],
+              message: `要素 ${arr[i]} はすでに正しい位置にあります。`
+            });
+          }
+        } else {
+          animations.push({
+            type: 'noSwap',
+            indices: [j],
+            array: [...arr],
+            message: `要素 ${arr[j]} はピボットより大きいため、交換しません。`
+          });
+        }
+      }
+      
+      // ピボットを正しい位置に移動
+      if (i + 1 !== end) {
+        animations.push({
+          type: 'swap',
+          indices: [i + 1, end],
+          array: [...arr],
+          message: `ピボット要素を正しい位置に移動します: インデックス ${i + 1} と ${end} を交換。`
+        });
+        
+        [arr[i + 1], arr[end]] = [arr[end], arr[i + 1]];
+        
+        animations.push({
+          type: 'swapped',
+          indices: [i + 1, end],
+          array: [...arr],
+          message: `ピボット要素を正しい位置（インデックス ${i + 1}）に配置しました。`
+        });
+      } else {
+        animations.push({
+          type: 'noSwap',
+          indices: [end],
+          array: [...arr],
+          message: `ピボット要素はすでに正しい位置にあります。`
+        });
+      }
+      
+      return i + 1;
+    }
+    
+    function toggleAnimation() {
+      if (!isSorting) {
+        isSorting = true;
+        animateBtn.textContent = '一時停止';
+        
+        const speed = 1100 - speedSlider.value * 100;
+        animationInterval = setInterval(() => {
+          if (animationIndex >= animations.length) {
+            clearInterval(animationInterval);
+            animationInterval = null;
+            isSorting = false;
+            animateBtn.textContent = 'アニメーション実行';
+            
+            // すべての要素をソート済みとしてマーク
+            const sortedIndices = Array.from({length: array.length}, (_, i) => i);
+            renderArray([], [], -1, sortedIndices);
+            explanation.innerHTML = '<p>クイックソートが完了しました！</p>';
+            
+            return;
+          }
+          
+          step();
+        }, speed);
+      } else {
+        clearInterval(animationInterval);
+        animationInterval = null;
+        isSorting = false;
+        animateBtn.textContent = 'アニメーション実行';
+      }
+    }
+    
+    function step() {
+      if (animationIndex >= animations.length) {
+        // すべての要素をソート済みとしてマーク
+        const sortedIndices = Array.from({length: array.length}, (_, i) => i);
+        renderArray([], [], -1, sortedIndices);
+        explanation.innerHTML = '<p>クイックソートが完了しました！</p>';
+        return;
+      }
+      
+      const currentAnimation = animations[animationIndex];
+      array = [...currentAnimation.array];
+      
+      let activeIndices = [];
+      let comparedIndices = [];
+      let pivotIndex = -1;
+      let sortedIndices = [];
+      
+      // 現在の状態までのソート済み要素を追跡
+      for (let i = 0; i <= animationIndex; i++) {
+        const anim = animations[i];
+        if (anim.type === 'sorted') {
+          sortedIndices.push(...anim.indices);
+        }
+      }
+      
+      switch (currentAnimation.type) {
+        case 'pivot':
+          pivotIndex = currentAnimation.pivotIndex;
+          break;
+        case 'compare':
+        case 'noSwap':
+          activeIndices = currentAnimation.indices;
+          break;
+        case 'swap':
+        case 'swapped':
+          comparedIndices = currentAnimation.indices;
+          break;
+        case 'sorted':
+          sortedIndices = [...new Set([...sortedIndices, ...currentAnimation.indices])];
+          break;
+      }
+      
+      renderArray(activeIndices, comparedIndices, pivotIndex, sortedIndices);
+      explanation.innerHTML = `<p>${currentAnimation.message}</p>`;
+      
+      animationIndex++;
+    }
+    
+    function updateSpeed() {
+      if (isSorting) {
+        clearInterval(animationInterval);
+        const speed = 1100 - speedSlider.value * 100;
+        animationInterval = setInterval(() => {
+          if (animationIndex >= animations.length) {
+            clearInterval(animationInterval);
+            animationInterval = null;
+            isSorting = false;
+            animateBtn.textContent = 'アニメーション実行';
+            return;
+          }
+          
+          step();
+        }, speed);
+      }
+    }
+  </script>
+</body>
+</html>
