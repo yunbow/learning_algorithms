@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ツリーの図解</title>
+  <link rel="stylesheet" href="./../../../styles.css">
+  <style>
+    button:disabled {
+      background-color: #cccccc;
+      cursor: not-allowed;
+    }
+    input {
+      padding: 8px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      width: 60px;
+      text-align: center;
+    }
+    .clear-btn {
+      background-color: #f44336;
+    }
+    .clear-btn:hover {
+      background-color: #d32f2f;
+    }
+    #canvas-container {
+      width: 100%;
+      height: 500px;
+      position: relative;
+      overflow: hidden;
+      background-color: #fcfcfc;
+    }
+    canvas {
+      display: block;
+    }
+    .log-container {
+      margin-top: 20px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      padding: 10px;
+      height: 100px;
+      overflow-y: auto;
+      background-color: #f9f9f9;
+    }
+    .log-item {
+      margin: 5px 0;
+      font-size: 14px;
+    }
+    .success {
+      color: #4CAF50;
+    }
+    .error {
+      color: #f44336;
+    }
+    .info {
+      color: #2196F3;
+    }
+    .traversal-controls {
+      display: flex;
+      gap: 10px;
+      margin-top: 10px;
+      justify-content: center;
+    }
+    .inorder-btn {
+      background-color: #2196F3;
+    }
+    .inorder-btn:hover {
+      background-color: #1976D2;
+    }
+    .preorder-btn {
+      background-color: #9C27B0;
+    }
+    .preorder-btn:hover {
+      background-color: #7B1FA2;
+    }
+    .postorder-btn {
+      background-color: #FF9800;
+    }
+    .postorder-btn:hover {
+      background-color: #F57C00;
+    }
+    .highlight {
+      animation: pulse 0.6s infinite alternate;
+    }
+    @keyframes pulse {
+      from {
+        transform: scale(1);
+        opacity: 1;
+      }
+      to {
+        transform: scale(1.1);
+        opacity: 0.8;
+      }
+    }
+  </style>
+</head>
+<body>
+  <ul class="breadcrumb">
+    <li><a href="./../../../">アルゴリズムの学習</a></li>
+    <li><a href="./../../">データ構造の問題</a></li>
+    <li><a href="./../">ツリー</a></li>
+    <li>図解</li>
+  </ul>
+
+  <div class="container">
+    <h1>ツリーの図解</h1>
+    
+    <div class="controls">
+      <input type="number" id="value-input" min="1" max="99" placeholder="値">
+      <button id="insert-btn">挿入</button>
+      <button id="delete-btn">削除</button>
+      <button id="search-btn">探索</button>
+      <button id="clear-btn" class="clear-btn">クリア</button>
+    </div>
+    
+    <div class="traversal-controls">
+      <button id="inorder-btn" class="inorder-btn">中間順巡回</button>
+      <button id="preorder-btn" class="preorder-btn">先行順巡回</button>
+      <button id="postorder-btn" class="postorder-btn">後行順巡回</button>
+    </div>
+    
+    <div id="canvas-container">
+      <canvas id="tree-canvas"></canvas>
+    </div>
+    
+    <div class="log-container">
+      <div id="log"></div>
+    </div>
+  </div>
+
+  <script>
+    class TreeNode {
+      constructor(value) {
+        this.value = value;
+        this.left = null;
+        this.right = null;
+        this.x = 0;
+        this.y = 0;
+        this.highlighted = false;
+        this.visited = false;
+      }
+    }
+
+    class BinarySearchTree {
+      constructor() {
+        this.root = null;
+        this.animationSpeed = 500; // ms
+        this.isAnimating = false;
+      }
+
+      // 値の挿入
+      insert(value) {
+        return new Promise(async (resolve) => {
+          const newNode = new TreeNode(value);
+          
+          if (this.root === null) {
+            this.root = newNode;
+            logMessage(`値 ${value} をルートに挿入しました`, 'success');
+            resolve();
+            return;
+          }
+          
+          await this._insertNode(this.root, newNode);
+          resolve();
+        });
+      }
+
+      async _insertNode(node, newNode, parent = null, direction = '') {
+        // 現在のノードをハイライト
+        node.highlighted = true;
+        await sleep(this.animationSpeed);
+        
+        if (newNode.value < node.value) {
+          logMessage(`${newNode.value} < ${node.value} なので、左に進みます`, 'info');
+          
+          if (node.left === null) {
+            node.left = newNode;
+            logMessage(`値 ${newNode.value} を挿入しました`, 'success');
+          } else {
+            node.highlighted = false;
+            await this._insertNode(node.left, newNode, node, 'left');
+          }
+        } else if (newNode.value > node.value) {
+          logMessage(`${newNode.value} > ${node.value} なので、右に進みます`, 'info');
+          
+          if (node.right === null) {
+            node.right = newNode;
+            logMessage(`値 ${newNode.value} を挿入しました`, 'success');
+          } else {
+            node.highlighted = false;
+            await this._insertNode(node.right, newNode, node, 'right');
+          }
+        } else {
+          logMessage(`値 ${newNode.value} は既に存在します`, 'error');
+        }
+        
+        node.highlighted = false;
+      }
+
+      // 値の削除
+      delete(value) {
+        return new Promise(async (resolve) => {
+          if (!this.root) {
+            logMessage('ツリーが空です', 'error');
+            resolve();
+            return;
+          }
+          
+          let found = false;
+          this.root = await this._deleteNode(this.root, value, null, '', found);
+          resolve();
+        });
+      }
+
+      async _deleteNode(node, value, parent = null, direction = '', found) {
+        if (node === null) {
+          return null;
+        }
+
+        // 現在のノードをハイライト
+        node.highlighted = true;
+        await sleep(this.animationSpeed);
+        
+        if (value < node.value) {
+          logMessage(`${value} < ${node.value} なので、左に進みます`, 'info');
+          node.highlighted = false;
+          node.left = await this._deleteNode(node.left, value, node, 'left', found);
+          return node;
+        } 
+        
+        if (value > node.value) {
+          logMessage(`${value} > ${node.value} なので、右に進みます`, 'info');
+          node.highlighted = false;
+          node.right = await this._deleteNode(node.right, value, node, 'right', found);
+          return node;
+        }
+        
+        // 値が見つかった場合
+        logMessage(`値 ${value} が見つかりました`, 'success');
+        found = true;
+        
+        // ケース1: 葉ノード（子なし）
+        if (node.left === null && node.right === null) {
+          logMessage(`値 ${value} を削除しました（葉ノード）`, 'success');
+          node.highlighted = false;
+          return null;
+        }
+        
+        // ケース2: 子が1つ
+        if (node.left === null) {
+          logMessage(`値 ${value} を削除しました（右の子のみ）`, 'success');
+          node.highlighted = false;
+          return node.right;
+        }
+        
+        if (node.right === null) {
+          logMessage(`値 ${value} を削除しました（左の子のみ）`, 'success');
+          node.highlighted = false;
+          return node.left;
+        }
+        
+        // ケース3: 子が2つ - 右サブツリーの最小値を見つける
+        logMessage(`値 ${value} は2つの子を持ちます。後継ノードを探します`, 'info');
+        
+        let successor = node.right;
+        successor.highlighted = true;
+        await sleep(this.animationSpeed);
+        
+        while (successor.left !== null) {
+          successor.highlighted = false;
+          successor = successor.left;
+          successor.highlighted = true;
+          await sleep(this.animationSpeed);
+        }
+        
+        logMessage(`後継ノード ${successor.value} が見つかりました`, 'info');
+        
+        // 後継ノードの値をコピー
+        node.value = successor.value;
+        successor.highlighted = false;
+        node.highlighted = true;
+        await sleep(this.animationSpeed);
+        
+        // 後継ノードを削除
+        logMessage(`値 ${node.value} を新しい値として設定し、古い後継ノードを削除します`, 'info');
+        node.right = await this._deleteNode(node.right, successor.value, node, 'right', found);
+        
+        node.highlighted = false;
+        return node;
+      }
+
+      // 値の探索
+      search(value) {
+        return new Promise(async (resolve) => {
+          if (!this.root) {
+            logMessage('ツリーが空です', 'error');
+            resolve(false);
+            return;
+          }
+          
+          const result = await this._searchNode(this.root, value);
+          resolve(result);
+        });
+      }
+
+      async _searchNode(node, value) {
+        if (node === null) {
+          logMessage(`値 ${value} は見つかりませんでした`, 'error');
+          return false;
+        }
+        
+        // 現在のノードをハイライト
+        node.highlighted = true;
+        await sleep(this.animationSpeed);
+        
+        if (value === node.value) {
+          logMessage(`値 ${value} が見つかりました！`, 'success');
+          await sleep(this.animationSpeed);
+          node.highlighted = false;
+          return true;
+        }
+        
+        if (value < node.value) {
+          logMessage(`${value} < ${node.value} なので、左に進みます`, 'info');
+          node.highlighted = false;
+          return await this._searchNode(node.left, value);
+        } else {
+          logMessage(`${value} > ${node.value} なので、右に進みます`, 'info');
+          node.highlighted = false;
+          return await this._searchNode(node.right, value);
+        }
+      }
+
+      // 中間順巡回（左-根-右）
+      async inOrderTraversal() {
+        logMessage('中間順巡回を開始します', 'info');
+        this._resetVisited(this.root);
+        await this._inOrder(this.root);
+        logMessage('中間順巡回が完了しました', 'success');
+      }
+
+      async _inOrder(node) {
+        if (node !== null) {
+          await this._inOrder(node.left);
+          
+          node.highlighted = true;
+          node.visited = true;
+          logMessage(`訪問: ${node.value}`, 'info');
+          await sleep(this.animationSpeed);
+          node.highlighted = false;
+          
+          await this._inOrder(node.right);
+        }
+      }
+
+      // 先行順巡回（根-左-右）
+      async preOrderTraversal() {
+        logMessage('先行順巡回を開始します', 'info');
+        this._resetVisited(this.root);
+        await this._preOrder(this.root);
+        logMessage('先行順巡回が完了しました', 'success');
+      }
+
+      async _preOrder(node) {
+        if (node !== null) {
+          node.highlighted = true;
+          node.visited = true;
+          logMessage(`訪問: ${node.value}`, 'info');
+          await sleep(this.animationSpeed);
+          node.highlighted = false;
+          
+          await this._preOrder(node.left);
+          await this._preOrder(node.right);
+        }
+      }
+
+      // 後行順巡回（左-右-根）
+      async postOrderTraversal() {
+        logMessage('後行順巡回を開始します', 'info');
+        this._resetVisited(this.root);
+        await this._postOrder(this.root);
+        logMessage('後行順巡回が完了しました', 'success');
+      }
+
+      async _postOrder(node) {
+        if (node !== null) {
+          await this._postOrder(node.left);
+          await this._postOrder(node.right);
+          
+          node.highlighted = true;
+          node.visited = true;
+          logMessage(`訪問: ${node.value}`, 'info');
+          await sleep(this.animationSpeed);
+          node.highlighted = false;
+        }
+      }
+
+      // 訪問フラグをリセット
+      _resetVisited(node) {
+        if (node !== null) {
+          node.visited = false;
+          this._resetVisited(node.left);
+          this._resetVisited(node.right);
+        }
+      }
+    }
+
+    // ユーティリティ関数
+    function sleep(ms) {
+      return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    function logMessage(message, type = 'info') {
+      const log = document.getElementById('log');
+      const item = document.createElement('div');
+      item.classList.add('log-item', type);
+      item.textContent = message;
+      log.appendChild(item);
+      log.scrollTop = log.scrollHeight;
+    }
+
+    // キャンバスの設定
+    const canvas = document.getElementById('tree-canvas');
+    const container = document.getElementById('canvas-container');
+    const ctx = canvas.getContext('2d');
+    
+    // レスポンシブキャンバス
+    function resizeCanvas() {
+      canvas.width = container.clientWidth;
+      canvas.height = container.clientHeight;
+    }
+    
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    // ツリーの描画
+    function drawTree() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      
+      if (!tree.root) return;
+      
+      // ノードの座標を計算
+      calculateNodePositions(tree.root, 0, canvas.width / 2, 60, canvas.width / 4);
+      
+      // エッジを描画
+      drawEdges(tree.root);
+      
+      // ノードを描画
+      drawNodes(tree.root);
+    }
+
+    function calculateNodePositions(node, depth, x, y, offset) {
+      if (!node) return;
+      
+      node.x = x;
+      node.y = y;
+      
+      // 次の深さでのオフセットを半分に
+      const nextOffset = Math.max(offset / 2, 30);
+      
+      calculateNodePositions(node.left, depth + 1, x - nextOffset, y + 80, nextOffset);
+      calculateNodePositions(node.right, depth + 1, x + nextOffset, y + 80, nextOffset);
+    }
+
+    function drawEdges(node) {
+      if (!node) return;
+      
+      ctx.strokeStyle = '#666';
+      ctx.lineWidth = 2;
+      
+      if (node.left) {
+        ctx.beginPath();
+        ctx.moveTo(node.x, node.y);
+        ctx.lineTo(node.left.x, node.left.y);
+        ctx.stroke();
+        drawEdges(node.left);
+      }
+      
+      if (node.right) {
+        ctx.beginPath();
+        ctx.moveTo(node.x, node.y);
+        ctx.lineTo(node.right.x, node.right.y);
+        ctx.stroke();
+        drawEdges(node.right);
+      }
+    }
+
+    function drawNodes(node) {
+      if (!node) return;
+      
+      // 円を描画
+      ctx.beginPath();
+      
+      if (node.highlighted) {
+        ctx.fillStyle = '#ff6666';
+      } else if (node.visited) {
+        ctx.fillStyle = '#66ff66';
+      } else {
+        ctx.fillStyle = '#4CAF50';
+      }
+      
+      ctx.arc(node.x, node.y, 20, 0, Math.PI * 2);
+      ctx.fill();
+      
+      // 枠線
+      ctx.strokeStyle = '#333';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+      
+      // 値を描画
+      ctx.fillStyle = 'white';
+      ctx.font = 'bold 14px Arial';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(node.value, node.x, node.y);
+      
+      drawNodes(node.left);
+      drawNodes(node.right);
+    }
+
+    // メインロジック
+    const tree = new BinarySearchTree();
+    
+    // アニメーションループ
+    function animate() {
+      drawTree();
+      requestAnimationFrame(animate);
+    }
+    
+    animate();
+
+    // イベントリスナー
+    document.getElementById('insert-btn').addEventListener('click', async () => {
+      if (tree.isAnimating) return;
+      
+      const input = document.getElementById('value-input');
+      const value = parseInt(input.value);
+      
+      if (isNaN(value) || value < 1 || value > 99) {
+        logMessage('1〜99の整数を入力してください', 'error');
+        return;
+      }
+      
+      tree.isAnimating = true;
+      await tree.insert(value);
+      tree.isAnimating = false;
+      input.value = '';
+    });
+
+    document.getElementById('delete-btn').addEventListener('click', async () => {
+      if (tree.isAnimating) return;
+      
+      const input = document.getElementById('value-input');
+      const value = parseInt(input.value);
+      
+      if (isNaN(value)) {
+        logMessage('削除する値を入力してください', 'error');
+        return;
+      }
+      
+      tree.isAnimating = true;
+      await tree.delete(value);
+      tree.isAnimating = false;
+      input.value = '';
+    });
+
+    document.getElementById('search-btn').addEventListener('click', async () => {
+      if (tree.isAnimating) return;
+      
+      const input = document.getElementById('value-input');
+      const value = parseInt(input.value);
+      
+      if (isNaN(value)) {
+        logMessage('探索する値を入力してください', 'error');
+        return;
+      }
+      
+      tree.isAnimating = true;
+      await tree.search(value);
+      tree.isAnimating = false;
+      input.value = '';
+    });
+
+    document.getElementById('clear-btn').addEventListener('click', () => {
+      if (tree.isAnimating) return;
+      
+      tree.root = null;
+      logMessage('ツリーをクリアしました', 'info');
+      document.getElementById('log').innerHTML = '';
+      logMessage('ログをクリアしました', 'info');
+    });
+
+    document.getElementById('inorder-btn').addEventListener('click', async () => {
+      if (tree.isAnimating) return;
+      if (!tree.root) {
+        logMessage('ツリーが空です', 'error');
+        return;
+      }
+      
+      tree.isAnimating = true;
+      await tree.inOrderTraversal();
+      tree.isAnimating = false;
+    });
+
+    document.getElementById('preorder-btn').addEventListener('click', async () => {
+      if (tree.isAnimating) return;
+      if (!tree.root) {
+        logMessage('ツリーが空です', 'error');
+        return;
+      }
+      
+      tree.isAnimating = true;
+      await tree.preOrderTraversal();
+      tree.isAnimating = false;
+    });
+
+    document.getElementById('postorder-btn').addEventListener('click', async () => {
+      if (tree.isAnimating) return;
+      if (!tree.root) {
+        logMessage('ツリーが空です', 'error');
+        return;
+      }
+      
+      tree.isAnimating = true;
+      await tree.postOrderTraversal();
+      tree.isAnimating = false;
+    });
+
+    // 初期値を挿入
+    window.addEventListener('load', async () => {
+      // サンプルツリーを作成
+      await tree.insert(50);
+      await tree.insert(30);
+      await tree.insert(70);
+      await tree.insert(20);
+      await tree.insert(40);
+      await tree.insert(60);
+      await tree.insert(80);
+      
+      logMessage('初期ツリーを生成しました', 'success');
+    });
+  </script>
+</body>
+</html>

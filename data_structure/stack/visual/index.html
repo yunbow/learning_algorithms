@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>スタックの図解</title>
+  <link rel="stylesheet" href="./../../../styles.css">
+  <style>
+    button:active {
+      background-color: #3e8e41;
+    }
+    
+    button#clearBtn {
+      background-color: #f44336;
+    }
+    
+    button#clearBtn:hover {
+      background-color: #d32f2f;
+    }
+    
+    button#peekBtn {
+      background-color: #2196F3;
+    }
+    
+    button#peekBtn:hover {
+      background-color: #0b7dda;
+    }
+    
+    .input-group {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    
+    input {
+      padding: 8px;
+      font-size: 16px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+    }
+    
+    .stack-container {
+      position: relative;
+      width: 200px;
+      height: 400px;
+      border: 2px solid #333;
+      border-top: none;
+      display: flex;
+      flex-direction: column-reverse;
+      overflow: hidden;
+    }
+    
+    .stack-item {
+      width: 100%;
+      height: 50px;
+      background-color: #4CAF50;
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      border-bottom: 1px solid #45a049;
+      position: relative;
+      transition: all 0.5s ease;
+    }
+    
+    .stack-item.highlight {
+      background-color: #FFC107;
+      color: #333;
+      animation: highlight 1s ease;
+    }
+    
+    .stack-item.removing {
+      opacity: 0;
+      transform: translateX(100%);
+    }
+    
+    .stack-item.adding {
+      animation: addItem 0.5s ease;
+    }
+    
+    .stack-base {
+      width: 240px;
+      height: 20px;
+      background-color: #333;
+      margin-top: 5px;
+    }
+    
+    .info-panel {
+      margin-top: 20px;
+      padding: 10px;
+      background-color: #f5f5f5;
+      border-radius: 4px;
+      width: 100%;
+      max-width: 600px;
+    }
+    
+    .message {
+      margin-bottom: 10px;
+      padding: 10px;
+      background-color: #e3f2fd;
+      border-left: 5px solid #2196F3;
+      display: none;
+    }
+    
+    .message.show {
+      display: block;
+      animation: fadeIn 0.5s ease;
+    }
+    
+    @keyframes highlight {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+      100% { transform: scale(1); }
+    }
+    
+    @keyframes addItem {
+      from {
+        transform: translateY(-50px);
+        opacity: 0;
+      }
+      to {
+        transform: translateY(0);
+        opacity: 1;
+      }
+    }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    
+    .stack-pointer {
+      position: absolute;
+      right: -40px;
+      width: 30px;
+      height: 30px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #FF5722;
+      font-weight: bold;
+      transition: top 0.5s ease;
+    }
+    
+    .stack-arrow {
+      position: absolute;
+      right: -30px;
+      width: 0;
+      height: 0;
+      border-top: 8px solid transparent;
+      border-bottom: 8px solid transparent;
+      border-right: 15px solid #FF5722;
+      transform: rotate(180deg);
+      transition: top 0.5s ease;
+    }
+    
+    .operation-title {
+      font-size: 24px;
+      color: #333;
+      margin: 20px 0 10px;
+    }
+    
+    .visualization-container {
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      gap: 50px;
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+  <ul class="breadcrumb">
+    <li><a href="./../../../">アルゴリズムの学習</a></li>
+    <li><a href="./../../">データ構造の問題</a></li>
+    <li><a href="./../">スタック</a></li>
+    <li>図解</li>
+  </ul>
+  
+  <div class="container">
+    <h1>スタックの図解</h1>
+  
+    <div class="controls">
+      <div class="input-group">
+        <input type="text" id="pushInput" placeholder="値を入力..." maxlength="6">
+        <button id="pushBtn">Push</button>
+      </div>
+      <button id="popBtn">Pop</button>
+      <button id="peekBtn">Peek</button>
+      <button id="clearBtn">クリア</button>
+    </div>
+    
+    <div class="visualization-container">
+      <div>
+        <div class="operation-title">スタック操作</div>
+        <div class="stack-container" id="stackContainer">
+          <div class="stack-pointer" id="stackPointer">↑</div>
+          <div class="stack-arrow" id="stackArrow"></div>
+        </div>
+        <div class="stack-base"></div>
+      </div>
+      
+      <div class="info-panel">
+        <h3>操作ログ</h3>
+        <div id="messageContainer"></div>
+      </div>
+    </div>      
+  </div>
+  
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const stackContainer = document.getElementById('stackContainer');
+      const pushBtn = document.getElementById('pushBtn');
+      const popBtn = document.getElementById('popBtn');
+      const peekBtn = document.getElementById('peekBtn');
+      const clearBtn = document.getElementById('clearBtn');
+      const pushInput = document.getElementById('pushInput');
+      const messageContainer = document.getElementById('messageContainer');
+      const stackPointer = document.getElementById('stackPointer');
+      const stackArrow = document.getElementById('stackArrow');
+      
+      let stack = [];
+      updatePointer();
+      
+      // Push操作
+      pushBtn.addEventListener('click', function() {
+        const value = pushInput.value.trim();
+        if (value) {
+          push(value);
+          pushInput.value = '';
+        } else {
+          showMessage('値を入力してください', 'error');
+        }
+      });
+      
+      // Enterキーでもプッシュできるようにする
+      pushInput.addEventListener('keyup', function(event) {
+        if (event.key === 'Enter') {
+          pushBtn.click();
+        }
+      });
+      
+      // Pop操作
+      popBtn.addEventListener('click', function() {
+        pop();
+      });
+      
+      // Peek操作
+      peekBtn.addEventListener('click', function() {
+        peek();
+      });
+      
+      // クリア操作
+      clearBtn.addEventListener('click', function() {
+        clearStack();
+      });
+      
+      function push(value) {
+        if (stack.length >= 7) {
+          showMessage('スタックが満杯です', 'error');
+          return;
+        }
+        
+        stack.push(value);
+        
+        const item = document.createElement('div');
+        item.className = 'stack-item adding';
+        item.textContent = value;
+        stackContainer.appendChild(item);
+        
+        showMessage(`値 "${value}" をプッシュしました`, 'success');
+        updatePointer();
+      }
+      
+      function pop() {
+        if (stack.length === 0) {
+          showMessage('スタックが空です', 'error');
+          return;
+        }
+        
+        const value = stack.pop();
+        const items = document.querySelectorAll('.stack-item');
+        const lastItem = items[items.length - 1];
+        
+        lastItem.classList.add('removing');
+        
+        setTimeout(() => {
+          lastItem.remove();
+          showMessage(`値 "${value}" をポップしました`, 'success');
+          updatePointer();
+        }, 500);
+      }
+      
+      function peek() {
+        if (stack.length === 0) {
+          showMessage('スタックが空です', 'error');
+          return;
+        }
+        
+        const value = stack[stack.length - 1];
+        const items = document.querySelectorAll('.stack-item');
+        const lastItem = items[items.length - 1];
+        
+        lastItem.classList.add('highlight');
+        showMessage(`スタックの一番上の値は "${value}" です`, 'info');
+        
+        setTimeout(() => {
+          lastItem.classList.remove('highlight');
+        }, 1000);
+      }
+      
+      function clearStack() {
+        stack = [];
+        while (stackContainer.firstChild) {
+          if (stackContainer.firstChild.id === 'stackPointer' || stackContainer.firstChild.id === 'stackArrow') {
+            // スタックポインタとスタック矢印は削除しない
+          } else {
+            stackContainer.removeChild(stackContainer.firstChild);
+          }
+        }
+        showMessage('スタックをクリアしました', 'success');
+        updatePointer();
+      }
+      
+      function showMessage(text, type) {
+        const message = document.createElement('div');
+        message.className = `message ${type} show`;
+        message.textContent = text;
+        
+        messageContainer.prepend(message);
+        
+        // 5秒後にメッセージを非表示にする
+        setTimeout(() => {
+          message.classList.remove('show');
+          setTimeout(() => {
+            messageContainer.removeChild(message);
+          }, 500);
+        }, 5000);
+        
+        // メッセージが5つ以上ある場合は古いものを削除
+        const messages = messageContainer.querySelectorAll('.message');
+        if (messages.length > 5) {
+          messageContainer.removeChild(messages[messages.length - 1]);
+        }
+      }
+      
+      function updatePointer() {
+        if (stack.length === 0) {
+          stackPointer.style.top = '100%';
+          stackArrow.style.top = '100%';
+        } else {
+          const items = document.querySelectorAll('.stack-item');
+          const lastItem = items[items.length - 1];
+          const itemRect = lastItem.getBoundingClientRect();
+          const containerRect = stackContainer.getBoundingClientRect();
+          const relativeTop = itemRect.top - containerRect.top + (itemRect.height / 2) - (stackPointer.offsetHeight / 2);
+          
+          stackPointer.style.top = `${relativeTop}px`;
+          stackArrow.style.top = `${relativeTop}px`;
+        }
+      }
+    });
+  </script>
+</body>
+</html>

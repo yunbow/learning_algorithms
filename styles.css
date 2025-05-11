@@ -235,13 +235,12 @@ canvas {
 }
 
 /* Buttons */
-.button-primary,
-.button-success,
-.button-danger {
+button {
     display: inline-block;
     padding: 10px 20px;
     font-size: 16px;
     color: white;
+    background-color: var(--primary-color);
     border: none;
     border-radius: var(--border-radius);
     cursor: pointer;
