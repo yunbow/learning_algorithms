@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>グラフの連結成分問題の図解</title>
+    <link rel="stylesheet" href="./../../styles.css">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <ul class="breadcrumb">
+        <li><a href="./../../">アルゴリズムの学習</a></li>
+        <li><a href="./../">グラフの連結成分問題</a></li>
+        <li>図解</li>
+    </ul>
+
+    <div class="container">
+        <h1>グラフの連結成分問題の図解</h1>
+        
+        <div class="controls">
+            <div class="control-group">
+                <label for="algorithm">アルゴリズム:</label>
+                <select id="algorithm">
+                    <option value="dfs">深さ優先探索 (DFS)</option>
+                    <option value="bfs">幅優先探索 (BFS)</option>
+                    <option value="unionfind">Union-Find</option>
+                </select>
+            </div>
+            <div class="button-group">
+                <button id="start-btn" class="btn primary">実行</button>
+                <button id="clear-btn" class="btn secondary">クリア</button>
+            </div>
+        </div>
+
+        <div class="visualization">
+            <div id="graph-container"></div>
+            <div class="info-panel">
+                <div class="step-info">
+                    <h3>処理ステップ: <span id="step-count">0</span></h3>
+                    <div id="step-description">アルゴリズムを選択して実行ボタンを押してください。</div>
+                </div>
+                <div class="component-info">
+                    <h3>連結成分: <span id="component-count">0</span></h3>
+                    <div id="component-list"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>

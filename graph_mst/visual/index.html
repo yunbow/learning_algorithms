@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>最小全域木問題の図解</title>
+    <link rel="stylesheet" href="./../../styles.css">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <ul class="breadcrumb">
+        <li><a href="./../../">アルゴリズムの学習</a></li>
+        <li><a href="./../">最小全域木問題</a></li>
+        <li>図解</li>
+    </ul>
+
+    <div class="container">
+        <h1>最小全域木問題の図解</h1>
+        
+        <div class="controls">
+            <select id="algorithm-select">
+                <option value="kruskal">クラスカル法</option>
+                <option value="prim">プリム法</option>
+            </select>
+            <button id="start-btn">アニメーション実行</button>
+            <button id="clear-btn">クリア</button>
+        </div>
+        
+        <div class="graph-container">
+            <div id="graph"></div>
+        </div>
+        
+        <div class="info-panel">
+            <h3>処理ステップ</h3>
+            <div id="step-counter">ステップ: 0</div>
+            <div id="step-info">アルゴリズムを選択して実行ボタンを押してください。</div>
+        </div>
+    </div>
+    
+    <script src="script.js"></script>
+</body>
+</html>
