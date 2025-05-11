@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>線形探索の図解</title>
+    <link rel="stylesheet" href="./../../../styles.css">
+    <style>
+        .array-container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            margin: 30px 0;
+        }
+        .array {
+            display: flex;
+            justify-content: center;
+            gap: 5px;
+        }
+        .array-element {
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px solid #333;
+            border-radius: 4px;
+            font-size: 18px;
+            font-weight: bold;
+            background-color: #fff;
+            transition: all 0.3s ease;
+        }
+        .array-index {
+            font-size: 14px;
+            text-align: center;
+            color: #666;
+        }
+        .current {
+            background-color: #ffeb3b;
+            transform: translateY(-5px);
+        }
+        .checked {
+            background-color: #e0e0e0;
+        }
+        .found {
+            background-color: #4caf50;
+            color: white;
+        }
+        .not-found {
+            background-color: #f44336;
+            color: white;
+        }
+        .search-info {
+            text-align: center;
+            font-size: 18px;
+            margin: 20px 0;
+            min-height: 27px;
+        }
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        button {
+            padding: 10px 16px;
+            border: none;
+            border-radius: 4px;
+            background-color: #2196f3;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #0b7dda;
+        }
+        .target-input {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin: 20px 0;
+        }
+        .target-input input {
+            width: 80px;
+            height: 30px;
+            text-align: center;
+            font-size: 16px;
+        }
+        .target-input label {
+            display: flex;
+            align-items: center;
+            font-size: 16px;
+        }
+        .step-counter {
+            text-align: center;
+            font-size: 16px;
+            margin-top: 10px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <ul class="breadcrumb">
+        <li><a href="./../../../">アルゴリズムの学習</a></li>
+        <li><a href="./../../">配列の検索問題</a></li>
+        <li><a href="./../">線形探索</a></li>
+        <li>図解</li>
+    </ul>
+
+    <div class="container">
+        <h1>線形探索の図解</h1>
+
+        <div class="controls">
+            <button id="animation-toggle" class="button-success">アニメーション実行</button>
+            <button id="step" class="button-primary">ステップ実行</button>
+            <button id="clear" class="button-danger">クリア</button>
+        </div>
+
+        <div class="target-input">
+            <label for="target-value">探す値：</label>
+            <input type="number" id="target-value" value="42">
+            <button id="set-target">設定</button>
+        </div>
+        
+        <div class="search-info" id="search-info">アニメーションを開始してください</div>
+        
+        <div class="array-container">
+            <div class="array" id="array"></div>
+            <div class="array" id="array-indices"></div>
+        </div>
+        
+        <div class="step-counter" id="step-counter"></div>
+        
+    </div>
+
+    <script>
+        // 配列とアニメーション関連の変数
+        const arrayData = [15, 23, 42, 4, 8, 16, 29];
+        let currentIndex = -1;
+        let targetValue = 42;
+        let animationInterval = null;
+        let isAnimationRunning = false;
+        let isSearchComplete = false;
+        let stepCount = 0;
+        
+        // DOM要素の取得
+        const arrayContainer = document.getElementById('array');
+        const arrayIndices = document.getElementById('array-indices');
+        const searchInfo = document.getElementById('search-info');
+        const stepCounter = document.getElementById('step-counter');
+        const clearBtn = document.getElementById('clear');
+        const animationToggleBtn = document.getElementById('animation-toggle');
+        const stepBtn = document.getElementById('step');
+        const targetInput = document.getElementById('target-value');
+        const setTargetBtn = document.getElementById('set-target');
+        
+        // 配列の初期化
+        function initArray() {
+            arrayContainer.innerHTML = '';
+            arrayIndices.innerHTML = '';
+            
+            arrayData.forEach((value, index) => {
+                const element = document.createElement('div');
+                element.className = 'array-element';
+                element.textContent = value;
+                element.id = `element-${index}`;
+                arrayContainer.appendChild(element);
+                
+                const indexElement = document.createElement('div');
+                indexElement.className = 'array-index';
+                indexElement.textContent = index;
+                arrayIndices.appendChild(indexElement);
+            });
+        }
+        
+        // アニメーションリセット
+        function resetAnimation() {
+            if (animationInterval) {
+                clearInterval(animationInterval);
+                animationInterval = null;
+            }
+            isAnimationRunning = false;
+            isSearchComplete = false;
+            currentIndex = -1;
+            stepCount = 0;
+            
+            // すべての要素のスタイルをリセット
+            for (let i = 0; i < arrayData.length; i++) {
+                const element = document.getElementById(`element-${i}`);
+                element.className = 'array-element';
+            }
+            
+            searchInfo.textContent = 'アニメーションを開始してください';
+            stepCounter.textContent = '';
+            animationToggleBtn.textContent = '一時停止';
+        }
+        
+        // アニメーションステップの実行
+        function step() {
+            if (isSearchComplete) return;
+            
+            stepCount++;
+            stepCounter.textContent = `ステップ数: ${stepCount}`;
+            
+            // 前のステップの要素のスタイルを更新
+            if (currentIndex >= 0) {
+                const prevElement = document.getElementById(`element-${currentIndex}`);
+                if (prevElement) {
+                    prevElement.classList.remove('current');
+                    prevElement.classList.add('checked');
+                }
+            }
+            
+            // 次のインデックスへ
+            currentIndex++;
+            
+            // 配列の範囲内かチェック
+            if (currentIndex >= arrayData.length) {
+                searchInfo.textContent = `「${targetValue}」は見つかりませんでした`;
+                isSearchComplete = true;
+                isAnimationRunning = false;
+                if (animationInterval) {
+                    clearInterval(animationInterval);
+                    animationInterval = null;
+                }
+                return;
+            }
+            
+            // 現在の要素を強調表示
+            const currentElement = document.getElementById(`element-${currentIndex}`);
+            currentElement.classList.add('current');
+            
+            // 探索のステータス表示
+            searchInfo.textContent = `インデックス ${currentIndex} の値 ${arrayData[currentIndex]} を確認中...`;
+            
+            // 値が見つかったかチェック
+            if (arrayData[currentIndex] === targetValue) {
+                searchInfo.textContent = `「${targetValue}」がインデックス ${currentIndex} で見つかりました！`;
+                currentElement.classList.remove('current');
+                currentElement.classList.add('found');
+                isSearchComplete = true;
+                isAnimationRunning = false;
+                if (animationInterval) {
+                    clearInterval(animationInterval);
+                    animationInterval = null;
+                }
+            }
+        }
+        
+        // アニメーションの開始/停止
+        function toggleAnimation() {
+            if (isSearchComplete) {
+                resetAnimation();
+                return;
+            }
+            
+            if (isAnimationRunning) {
+                // アニメーション停止
+                clearInterval(animationInterval);
+                animationInterval = null;
+                isAnimationRunning = false;
+                animationToggleBtn.textContent = 'アニメーション実行/停止';
+            } else {
+                // アニメーション開始
+                isAnimationRunning = true;
+                animationToggleBtn.textContent = '一時停止';
+                animationInterval = setInterval(() => {
+                    step();
+                    if (isSearchComplete) {
+                        animationToggleBtn.textContent = 'アニメーション実行/停止';
+                    }
+                }, 800);
+            }
+        }
+        
+        // ターゲット値の設定
+        function setTarget() {
+            const newTarget = parseInt(targetInput.value);
+            if (!isNaN(newTarget)) {
+                targetValue = newTarget;
+                resetAnimation();
+                searchInfo.textContent = `「${targetValue}」を探します。アニメーションを開始してください`;
+            }
+        }
+        
+        // イベントリスナーの設定
+        clearBtn.addEventListener('click', resetAnimation);
+        animationToggleBtn.addEventListener('click', toggleAnimation);
+        stepBtn.addEventListener('click', step);
+        setTargetBtn.addEventListener('click', setTarget);
+        
+        // 初期化
+        initArray();
+        targetInput.value = targetValue;
+    </script>
+</body>
+</html>

@@ -1,10 +1,10 @@
+// Java
+// 配列の検索: ハッシュ探索 (Hash Search)
+
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * 配列の検索: ハッシュ探索 (Hash Search)
- */
 public class HashSearchDemo {
     
     static class ArrayData {

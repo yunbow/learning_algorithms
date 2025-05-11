@@ -1,5 +1,7 @@
-package main
+// Go
+// 配列の検索: 二分探索 (Binary Search)
 
+package main
 import "fmt"
 
 // ArrayData 配列のデータを扱う構造体

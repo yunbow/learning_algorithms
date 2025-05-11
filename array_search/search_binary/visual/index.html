@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>二分探索の図解</title>
+  <link rel="stylesheet" href="./../../../styles.css">
+  <style>    
+    button:disabled {
+      background-color: #cccccc;
+      cursor: not-allowed;
+    }
+    
+    .input-container {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    
+    input {
+      padding: 8px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 16px;
+      width: 60px;
+      text-align: center;
+    }
+    
+    label {
+      font-size: 16px;
+      margin-right: 5px;
+    }
+    
+    .array-container {
+      margin: 20px 0;
+      position: relative;
+      height: 220px;
+    }
+    
+    .array {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 10px;
+    }
+    
+    .cell {
+      width: 50px;
+      height: 50px;
+      border: 2px solid #333;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      margin: 0 2px;
+      position: relative;
+      background-color: white;
+      transition: all 0.3s ease;
+    }
+    
+    .cell-index {
+      position: absolute;
+      bottom: -25px;
+      font-size: 14px;
+      color: #666;
+    }
+    
+    .pointer {
+      position: absolute;
+      font-size: 24px;
+      color: #333;
+      text-align: center;
+      width: 50px;
+      transition: all 0.5s ease;
+    }
+    
+    .pointer-label {
+      font-size: 14px;
+      margin-top: 5px;
+    }
+    
+    .left {
+      color: #e74c3c;
+    }
+    
+    .mid {
+      color: #3498db;
+      font-weight: bold;
+    }
+    
+    .right {
+      color: #2ecc71;
+    }
+    
+    .highlight {
+      background-color: #ffffcc;
+    }
+    
+    .found {
+      background-color: #d5f5e3;
+      transform: scale(1.1);
+    }
+    
+    .not-found {
+      background-color: #fadbd8;
+    }
+    
+    .excluded {
+      background-color: #eee;
+      opacity: 0.5;
+    }
+    
+    .status {
+      text-align: center;
+      font-size: 18px;
+      margin: 20px 0;
+      min-height: 50px;
+      padding: 10px;
+      border-radius: 4px;
+      background-color: #f8f9fa;
+    }
+    
+    .log-container {
+      margin-top: 20px;
+      max-height: 150px;
+      overflow-y: auto;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      background-color: #f8f9fa;
+    }
+    
+    .log-entry {
+      margin-bottom: 5px;
+      padding: 5px;
+      border-bottom: 1px solid #eee;
+    }
+  </style>
+</head>
+<body>
+  <ul class="breadcrumb">
+    <li><a href="./../../../">アルゴリズムの学習</a></li>
+    <li><a href="./../../">配列の検索問題</a></li>
+    <li><a href="./../">二分探索</a></li>
+    <li>図解</li>
+  </ul>
+
+  <div class="container">
+    <h1>二分探索の図解</h1>
+
+    <div class="controls">
+      <button id="animateBtn" class="button-success">アニメーション実行</button>
+      <button id="stepBtn" class="button-primary">ステップ実行</button>
+      <button id="resetBtn" class="button-danger">クリア</button>
+    </div>
+
+    <div class="input-container">
+      <div>
+        <label for="target">探す値:</label>
+        <input type="number" id="target" min="1" max="100" value="42">
+      </div>
+    </div>
+        
+    <div class="status" id="status">
+      実行ボタンを押して二分探索を開始してください。
+    </div>
+    
+    <div class="array-container">
+      <div class="array" id="array"></div>
+      <div id="pointers"></div>
+    </div>
+    
+    <div class="log-container" id="log">
+      <div class="log-entry">二分探索のステップがここに表示されます。</div>
+    </div>
+  </div>
+
+  <script>
+    // ソート済み配列を生成
+    const generateSortedArray = () => {
+      const array = [];
+      for (let i = 0; i < 15; i++) {
+        array.push(i * 5 + 5); // 5, 10, 15, ...
+      }
+      return array;
+    };
+
+    const array = generateSortedArray();
+    let searchTarget = 42;
+    
+    // アニメーションの状態
+    let animationState = {
+      steps: [],
+      currentStep: -1,
+      animationInterval: null,
+      isAnimating: false
+    };
+    
+    // DOM要素
+    const arrayContainer = document.getElementById('array');
+    const pointersContainer = document.getElementById('pointers');
+    const statusEl = document.getElementById('status');
+    const logEl = document.getElementById('log');
+    const targetInput = document.getElementById('target');
+    const resetBtn = document.getElementById('resetBtn');
+    const animateBtn = document.getElementById('animateBtn');
+    const stepBtn = document.getElementById('stepBtn');
+    
+    // 配列を描画
+    const renderArray = () => {
+      arrayContainer.innerHTML = '';
+      array.forEach((value, index) => {
+        const cell = document.createElement('div');
+        cell.className = 'cell';
+        cell.dataset.index = index;
+        cell.innerHTML = value;
+        
+        const indexEl = document.createElement('div');
+        indexEl.className = 'cell-index';
+        indexEl.textContent = index;
+        cell.appendChild(indexEl);
+        
+        arrayContainer.appendChild(cell);
+      });
+    };
+    
+    // ポインタ（left, mid, right）を描画
+    const renderPointers = (left, mid, right) => {
+      pointersContainer.innerHTML = '';
+      
+      if (left !== undefined) {
+        const leftPointer = document.createElement('div');
+        leftPointer.className = 'pointer left';
+        leftPointer.style.left = `${left * 54 + 20}px`;
+        leftPointer.innerHTML = '▲<div class="pointer-label">L</div>';
+        pointersContainer.appendChild(leftPointer);
+      }
+      
+      if (mid !== undefined) {
+        const midPointer = document.createElement('div');
+        midPointer.className = 'pointer mid';
+        midPointer.style.left = `${mid * 54 + 20}px`;
+        midPointer.innerHTML = '▲<div class="pointer-label">M</div>';
+        pointersContainer.appendChild(midPointer);
+      }
+      
+      if (right !== undefined) {
+        const rightPointer = document.createElement('div');
+        rightPointer.className = 'pointer right';
+        rightPointer.style.left = `${right * 54 + 20}px`;
+        rightPointer.innerHTML = '▲<div class="pointer-label">R</div>';
+        pointersContainer.appendChild(rightPointer);
+      }
+    };
+    
+    // ステータスを更新
+    const updateStatus = (message) => {
+      statusEl.textContent = message;
+    };
+    
+    // ログにメッセージを追加
+    const addLog = (message) => {
+      const logEntry = document.createElement('div');
+      logEntry.className = 'log-entry';
+      logEntry.textContent = message;
+      logEl.appendChild(logEntry);
+      logEl.scrollTop = logEl.scrollHeight;
+    };
+    
+    // セルのクラスをクリア
+    const clearCellClasses = () => {
+      document.querySelectorAll('.cell').forEach(cell => {
+        cell.classList.remove('highlight', 'found', 'not-found', 'excluded');
+      });
+    };
+    
+    // セルをハイライト
+    const highlightCell = (index, className) => {
+      const cell = document.querySelector(`.cell[data-index="${index}"]`);
+      if (cell) {
+        cell.classList.add(className);
+      }
+    };
+    
+    // 指定された範囲のセルを「除外」としてマーク
+    const markRangeAsExcluded = (start, end) => {
+      for (let i = start; i <= end; i++) {
+        if (i >= 0 && i < array.length) {
+          highlightCell(i, 'excluded');
+        }
+      }
+    };
+    
+    // 二分探索のステップを生成
+    const generateBinarySearchSteps = (arr, target) => {
+      const steps = [];
+      let left = 0;
+      let right = arr.length - 1;
+      
+      steps.push({
+        type: 'init',
+        left,
+        right,
+        message: `探索を開始します。配列の長さ: ${arr.length}、探す値: ${target}`
+      });
+      
+      while (left <= right) {
+        const mid = Math.floor((left + right) / 2);
+        
+        steps.push({
+          type: 'compare',
+          left,
+          mid,
+          right,
+          message: `中間値の確認: arr[${mid}] = ${arr[mid]} と目標値 ${target} を比較`
+        });
+        
+        if (arr[mid] === target) {
+          steps.push({
+            type: 'found',
+            mid,
+            message: `値 ${target} が位置 ${mid} で見つかりました！`
+          });
+          return steps;
+        } else if (arr[mid] < target) {
+          steps.push({
+            type: 'move_left',
+            oldLeft: left,
+            left: mid + 1,
+            mid,
+            right,
+            message: `中間値 ${arr[mid]} < 目標値 ${target} なので、左端を ${mid + 1} に移動します`
+          });
+          left = mid + 1;
+        } else {
+          steps.push({
+            type: 'move_right',
+            oldRight: right,
+            left,
+            mid,
+            right: mid - 1,
+            message: `中間値 ${arr[mid]} > 目標値 ${target} なので、右端を ${mid - 1} に移動します`
+          });
+          right = mid - 1;
+        }
+      }
+      
+      steps.push({
+        type: 'not_found',
+        message: `値 ${target} は配列内に見つかりませんでした`
+      });
+      
+      return steps;
+    };
+    
+    // ステップを実行
+    const executeStep = (step) => {
+      clearCellClasses();
+      
+      switch (step.type) {
+        case 'init':
+          renderPointers(step.left, undefined, step.right);
+          updateStatus(step.message);
+          break;
+          
+        case 'compare':
+          renderPointers(step.left, step.mid, step.right);
+          highlightCell(step.mid, 'highlight');
+          updateStatus(step.message);
+          break;
+          
+        case 'found':
+          renderPointers(undefined, step.mid, undefined);
+          highlightCell(step.mid, 'found');
+          updateStatus(step.message);
+          break;
+          
+        case 'move_left':
+          renderPointers(step.left, step.mid, step.right);
+          highlightCell(step.mid, 'highlight');
+          // 左側の範囲を除外
+          markRangeAsExcluded(step.oldLeft, step.left - 1);
+          updateStatus(step.message);
+          break;
+          
+        case 'move_right':
+          renderPointers(step.left, step.mid, step.right);
+          highlightCell(step.mid, 'highlight');
+          // 右側の範囲を除外
+          markRangeAsExcluded(step.right + 1, step.oldRight);
+          updateStatus(step.message);
+          break;
+          
+        case 'not_found':
+          renderPointers(undefined, undefined, undefined);
+          updateStatus(step.message);
+          break;
+      }
+      
+      addLog(step.message);
+    };
+    
+    // アニメーションを初期化
+    const initAnimation = () => {
+      // 現在実行中のアニメーションを停止
+      if (animationState.animationInterval) {
+        clearInterval(animationState.animationInterval);
+        animationState.animationInterval = null;
+      }
+      
+      // 状態をリセット
+      animationState.isAnimating = false;
+      animationState.currentStep = -1;
+      
+      // UIをリセット
+      clearCellClasses();
+      renderPointers(undefined, undefined, undefined);
+      updateStatus('実行ボタンを押して二分探索を開始してください。');
+      
+      // ログをクリア
+      logEl.innerHTML = '<div class="log-entry">二分探索のステップがここに表示されます。</div>';
+      
+      // 検索値を取得
+      searchTarget = parseInt(targetInput.value);
+      
+      // ステップを生成
+      animationState.steps = generateBinarySearchSteps(array, searchTarget);
+      
+      // ボタンを有効化
+      animateBtn.textContent = 'アニメーション実行';
+      animateBtn.disabled = false;
+      stepBtn.disabled = false;
+    };
+    
+    // 次のステップを実行
+    const nextStep = () => {
+      if (animationState.currentStep < animationState.steps.length - 1) {
+        animationState.currentStep++;
+        executeStep(animationState.steps[animationState.currentStep]);
+        
+        // 最後のステップに到達したらステップボタンを無効化
+        if (animationState.currentStep === animationState.steps.length - 1) {
+          stepBtn.disabled = true;
+          animateBtn.disabled = true;
+        }
+        
+        return true;
+      }
+      return false;
+    };
+    
+    // アニメーションを開始/停止
+    const toggleAnimation = () => {
+      if (animationState.isAnimating) {
+        // アニメーションを停止
+        clearInterval(animationState.animationInterval);
+        animationState.animationInterval = null;
+        animationState.isAnimating = false;
+        animateBtn.textContent = 'アニメーション実行';
+      } else {
+        // アニメーションを開始
+        animationState.isAnimating = true;
+        animateBtn.textContent = '一時停止';
+        
+        animationState.animationInterval = setInterval(() => {
+          const hasMoreSteps = nextStep();
+          if (!hasMoreSteps) {
+            // すべてのステップが完了したらアニメーションを停止
+            clearInterval(animationState.animationInterval);
+            animationState.animationInterval = null;
+            animationState.isAnimating = false;
+            animateBtn.textContent = 'アニメーション実行';
+            animateBtn.disabled = true;
+          }
+        }, 1000);
+      }
+    };
+    
+    // イベントリスナー
+    resetBtn.addEventListener('click', initAnimation);
+    
+    animateBtn.addEventListener('click', toggleAnimation);
+    
+    stepBtn.addEventListener('click', () => {
+      nextStep();
+    });
+    
+    targetInput.addEventListener('change', () => {
+      initAnimation();
+    });
+    
+    // 初期化
+    renderArray();
+    initAnimation();
+  </script>
+</body>
+</html>

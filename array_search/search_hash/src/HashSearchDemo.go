@@ -1,5 +1,7 @@
-package main
+// Go
+// 配列の検索: ハッシュ探索 (Hash Search)
 
+package main
 import "fmt"
 
 // ArrayData 配列データを管理する構造体

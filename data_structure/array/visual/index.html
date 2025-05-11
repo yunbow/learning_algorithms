@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>配列の図解</title>
+    <link rel="stylesheet" href="./../../../styles.css">
+    <style>
+        .control-panel {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 20px;
+            justify-content: center;
+        }
+        button {
+            padding: 8px 15px;
+            border: none;
+            border-radius: 4px;
+            background-color: #4CAF50;
+            color: white;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+        #clearBtn {
+            background-color: #f44336;
+        }
+        #clearBtn:hover {
+            background-color: #d32f2f;
+        }
+        input {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            width: 50px;
+            text-align: center;
+        }
+        .array-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 20px;
+        }
+        .array-visualization {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px;
+            min-height: 80px;
+        }
+        .array-cell {
+            width: 50px;
+            height: 50px;
+            margin: 0 2px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border: 2px solid #333;
+            border-radius: 4px;
+            background-color: #e0e0e0;
+            font-weight: bold;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+        .array-cell.highlight {
+            background-color: #ffeb3b;
+            transform: translateY(-5px);
+        }
+        .array-cell.highlight-green {
+            background-color: #a5d6a7;
+        }
+        .array-cell.highlight-red {
+            background-color: #ef9a9a;
+        }
+        .array-index {
+            position: absolute;
+            top: -20px;
+            font-size: 12px;
+            color: #666;
+        }
+        .status-panel {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #f1f1f1;
+            border-radius: 4px;
+            min-height: 50px;
+        }
+        .input-group {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            margin: 0 5px;
+        }
+        .input-label {
+            font-size: 12px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <ul class="breadcrumb">
+        <li><a href="./../../../">アルゴリズムの学習</a></li>
+        <li><a href="./../../">データ構造の問題</a></li>
+        <li><a href="./../">配列</a></li>
+        <li>図解</li>
+    </ul>
+    <div class="container">
+        <h1>配列の図解</h1>
+        
+        <div class="control-panel">
+            <div class="input-group">
+                <input type="number" id="valueInput" min="0" max="99" placeholder="値">
+                <div class="input-label">値</div>
+            </div>
+            <div class="input-group">
+                <input type="number" id="indexInput" min="0" placeholder="位置">
+                <div class="input-label">位置</div>
+            </div>
+            <button id="insertBtn">挿入</button>
+            <button id="deleteBtn">削除</button>
+            <button id="updateBtn">更新</button>
+            <button id="searchBtn">探索</button>
+            <button id="sortBtn">並び替え</button>
+            <button id="clearBtn">クリア</button>
+        </div>
+        
+        <div class="array-container">
+            <div class="array-visualization" id="arrayVisualization"></div>
+        </div>
+        
+        <div class="status-panel" id="statusPanel"></div>
+    </div>
+
+    <script>
+        // 初期配列
+        let array = [5, 12, 8, 3, 17, 9, 4];
+        let isAnimating = false;
+        
+        // DOM要素
+        const valueInput = document.getElementById('valueInput');
+        const indexInput = document.getElementById('indexInput');
+        const insertBtn = document.getElementById('insertBtn');
+        const deleteBtn = document.getElementById('deleteBtn');
+        const updateBtn = document.getElementById('updateBtn');
+        const searchBtn = document.getElementById('searchBtn');
+        const sortBtn = document.getElementById('sortBtn');
+        const clearBtn = document.getElementById('clearBtn');
+        const arrayVisualization = document.getElementById('arrayVisualization');
+        const statusPanel = document.getElementById('statusPanel');
+        
+        // 配列を描画する関数
+        function renderArray() {
+            arrayVisualization.innerHTML = '';
+            
+            array.forEach((value, index) => {
+                const cell = document.createElement('div');
+                cell.className = 'array-cell';
+                cell.textContent = value;
+                
+                const indexLabel = document.createElement('div');
+                indexLabel.className = 'array-index';
+                indexLabel.textContent = index;
+                
+                cell.appendChild(indexLabel);
+                arrayVisualization.appendChild(cell);
+            });
+        }
+        
+        // ステータスメッセージを表示する関数
+        function setStatus(message) {
+            statusPanel.textContent = message;
+        }
+        
+        // 要素をハイライトする関数
+        function highlightCell(index, className = 'highlight', duration = 500) {
+            return new Promise(resolve => {
+                const cells = document.querySelectorAll('.array-cell');
+                if (index >= 0 && index < cells.length) {
+                    cells[index].classList.add(className);
+                    setTimeout(() => {
+                        cells[index].classList.remove(className);
+                        resolve();
+                    }, duration);
+                } else {
+                    resolve();
+                }
+            });
+        }
+        
+        // 複数のセルを同時にハイライトする関数
+        function highlightMultipleCells(indices, className = 'highlight', duration = 500) {
+            return new Promise(resolve => {
+                const cells = document.querySelectorAll('.array-cell');
+                indices.forEach(index => {
+                    if (index >= 0 && index < cells.length) {
+                        cells[index].classList.add(className);
+                    }
+                });
+                
+                setTimeout(() => {
+                    indices.forEach(index => {
+                        if (index >= 0 && index < cells.length) {
+                            cells[index].classList.remove(className);
+                        }
+                    });
+                    resolve();
+                }, duration);
+            });
+        }
+        
+        // 挿入操作
+        async function insertElement() {
+            if (isAnimating) return;
+            isAnimating = true;
+            
+            const value = parseInt(valueInput.value);
+            let index = parseInt(indexInput.value);
+            
+            if (isNaN(value)) {
+                setStatus('エラー: 有効な値を入力してください');
+                isAnimating = false;
+                return;
+            }
+            
+            if (isNaN(index) || index < 0) {
+                index = 0;
+                indexInput.value = '0';
+            }
+            
+            if (index > array.length) {
+                index = array.length;
+                indexInput.value = array.length.toString();
+            }
+            
+            setStatus(`位置 ${index} に値 ${value} を挿入中...`);
+            
+            // 挿入位置以降の要素をハイライト
+            const highlightIndices = [];
+            for (let i = index; i < array.length; i++) {
+                highlightIndices.push(i);
+            }
+            await highlightMultipleCells(highlightIndices);
+            
+            // 挿入処理
+            array.splice(index, 0, value);
+            renderArray();
+            
+            // 新しく挿入された要素をハイライト
+            await highlightCell(index, 'highlight-green');
+            
+            setStatus(`値 ${value} が位置 ${index} に挿入されました`);
+            isAnimating = false;
+        }
+        
+        // 削除操作
+        async function deleteElement() {
+            if (isAnimating) return;
+            isAnimating = true;
+            
+            let index = parseInt(indexInput.value);
+            
+            if (isNaN(index) || index < 0 || index >= array.length) {
+                setStatus('エラー: 有効な位置を入力してください');
+                isAnimating = false;
+                return;
+            }
+            
+            setStatus(`位置 ${index} の要素を削除中...`);
+            
+            // 削除する要素をハイライト
+            await highlightCell(index, 'highlight-red');
+            
+            // 削除後に移動する要素をハイライト
+            const highlightIndices = [];
+            for (let i = index + 1; i < array.length; i++) {
+                highlightIndices.push(i);
+            }
+            await highlightMultipleCells(highlightIndices);
+            
+            // 削除処理
+            const deletedValue = array[index];
+            array.splice(index, 1);
+            renderArray();
+            
+            setStatus(`位置 ${index} の値 ${deletedValue} が削除されました`);
+            isAnimating = false;
+        }
+        
+        // 更新操作
+        async function updateElement() {
+            if (isAnimating) return;
+            isAnimating = true;
+            
+            const value = parseInt(valueInput.value);
+            const index = parseInt(indexInput.value);
+            
+            if (isNaN(value)) {
+                setStatus('エラー: 有効な値を入力してください');
+                isAnimating = false;
+                return;
+            }
+            
+            if (isNaN(index) || index < 0 || index >= array.length) {
+                setStatus('エラー: 有効な位置を入力してください');
+                isAnimating = false;
+                return;
+            }
+            
+            setStatus(`位置 ${index} の要素を値 ${value} に更新中...`);
+            
+            // 更新する要素をハイライト
+            await highlightCell(index, 'highlight-red');
+            
+            // 更新処理
+            const oldValue = array[index];
+            array[index] = value;
+            renderArray();
+            
+            // 更新後の要素をハイライト
+            await highlightCell(index, 'highlight-green');
+            
+            setStatus(`位置 ${index} の値が ${oldValue} から ${value} に更新されました`);
+            isAnimating = false;
+        }
+        
+        // 探索操作（線形探索）
+        async function searchElement() {
+            if (isAnimating) return;
+            isAnimating = true;
+            
+            const value = parseInt(valueInput.value);
+            
+            if (isNaN(value)) {
+                setStatus('エラー: 探索する値を入力してください');
+                isAnimating = false;
+                return;
+            }
+            
+            setStatus(`値 ${value} を探索中...`);
+            
+            let found = false;
+            for (let i = 0; i < array.length; i++) {
+                // 各要素を順に確認
+                await highlightCell(i);
+                
+                if (array[i] === value) {
+                    // 値が見つかった場合
+                    await highlightCell(i, 'highlight-green', 1000);
+                    setStatus(`値 ${value} が位置 ${i} で見つかりました`);
+                    found = true;
+                    break;
+                }
+            }
+            
+            if (!found) {
+                setStatus(`値 ${value} は配列内に見つかりませんでした`);
+            }
+            
+            isAnimating = false;
+        }
+        
+        // 並び替え操作（バブルソート）
+        async function sortArray() {
+            if (isAnimating) return;
+            isAnimating = true;
+            
+            setStatus('配列を昇順に並び替え中（バブルソート）...');
+            
+            const n = array.length;
+            for (let i = 0; i < n - 1; i++) {
+                for (let j = 0; j < n - i - 1; j++) {
+                    // 比較する2つの要素をハイライト
+                    await highlightMultipleCells([j, j + 1]);
+                    
+                    if (array[j] > array[j + 1]) {
+                        // 2つの要素を交換
+                        const temp = array[j];
+                        array[j] = array[j + 1];
+                        array[j + 1] = temp;
+                        renderArray();
+                        
+                        // 交換した要素をハイライト
+                        await highlightMultipleCells([j, j + 1], 'highlight-green', 300);
+                    }
+                }
+            }
+            
+            setStatus('配列が昇順に並び替えられました');
+            isAnimating = false;
+        }
+        
+        // クリア操作
+        function clearArray() {
+            array = [5, 12, 8, 3, 17, 9, 4];
+            renderArray();
+            valueInput.value = '';
+            indexInput.value = '';
+            setStatus('配列が初期状態にリセットされました');
+        }
+        
+        // イベントリスナーの設定
+        insertBtn.addEventListener('click', insertElement);
+        deleteBtn.addEventListener('click', deleteElement);
+        updateBtn.addEventListener('click', updateElement);
+        searchBtn.addEventListener('click', searchElement);
+        sortBtn.addEventListener('click', sortArray);
+        clearBtn.addEventListener('click', clearArray);
+        
+        // 配列の初期描画
+        renderArray();
+        setStatus('操作を選択してください');
+        
+        // ボタンの状態を更新する関数
+        function updateButtonStates() {
+            const disableButtons = isAnimating;
+            insertBtn.disabled = disableButtons;
+            deleteBtn.disabled = disableButtons;
+            updateBtn.disabled = disableButtons;
+            searchBtn.disabled = disableButtons;
+            sortBtn.disabled = disableButtons;
+            clearBtn.disabled = disableButtons;
+        }
+        
+        // 定期的にボタンの状態を更新
+        setInterval(updateButtonStates, 100);
+    </script>
+</body>
+</html>

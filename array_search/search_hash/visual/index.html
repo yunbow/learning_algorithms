@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>ハッシュ探索の図解</title>
+  <link rel="stylesheet" href="./../../../styles.css">
+  <style>
+    #reset-btn {
+      background-color: #f44336;
+    }
+    #reset-btn:hover {
+      background-color: #d32f2f;
+    }
+    #step-btn {
+      background-color: #2196F3;
+    }
+    #step-btn:hover {
+      background-color: #1976D2;
+    }
+    .visualization {
+      margin: 20px auto;
+      position: relative;
+    }
+    .hash-table {
+      display: grid;
+      grid-template-columns: repeat(10, 1fr);
+      gap: 5px;
+      margin-top: 20px;
+    }
+    .bucket {
+      border: 2px solid #ccc;
+      border-radius: 4px;
+      padding: 10px;
+      min-height: 100px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      position: relative;
+    }
+    .bucket-header {
+      font-weight: bold;
+      margin-bottom: 10px;
+      text-align: center;
+    }
+    .item {
+      background-color: #e0e0e0;
+      border-radius: 4px;
+      padding: 5px 8px;
+      margin: 3px;
+      text-align: center;
+      transition: all 0.5s ease;
+    }
+    .original-array {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px;
+      margin: 20px 0;
+    }
+    .array-item {
+      background-color: #e0e0e0;
+      border-radius: 4px;
+      padding: 8px 12px;
+      transition: all 0.5s ease;
+    }
+    .highlight {
+      background-color: #ffeb3b;
+      box-shadow: 0 0 5px rgba(0,0,0,0.3);
+      transform: scale(1.1);
+    }
+    .search {
+      background-color: #81c784;
+    }
+    .found {
+      background-color: #4CAF50;
+      color: white;
+    }
+    .not-found {
+      background-color: #f44336;
+      color: white;
+    }
+    .message-box {
+      margin: 20px 0;
+      padding: 10px;
+      border-radius: 4px;
+      text-align: center;
+      font-size: 16px;
+      min-height: 40px;
+    }
+    .hash-function {
+      margin: 20px 0;
+      padding: 10px;
+      background-color: #e8f5e9;
+      border-radius: 4px;
+      text-align: center;
+    }
+    .search-controls {
+      display: flex;
+      justify-content: center;
+      margin: 20px 0;
+      gap: 10px;
+    }
+    .search-input {
+      padding: 8px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      width: 100px;
+    }
+    .search-button {
+      padding: 8px 16px;
+      background-color: #9c27b0;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .search-button:hover {
+      background-color: #7b1fa2;
+    }
+  </style>
+</head>
+<body>
+  <ul class="breadcrumb">
+    <li><a href="./../../../">アルゴリズムの学習</a></li>
+    <li><a href="./../../">配列の検索問題</a></li>
+    <li><a href="./../">ハッシュ探索</a></li>
+    <li>図解</li>
+  </ul>
+
+  <div class="container">
+    <h1>ハッシュ探索の図解</h1>
+    
+    <div class="controls">
+      <button id="animate-btn" class="button-success">アニメーション実行</button>
+      <button id="step-btn" class="button-primary">ステップ実行</button>
+      <button id="reset-btn" class="button-danger">クリア</button>
+    </div>
+    
+    <div class="search-controls">
+      <input type="number" class="search-input" id="search-input" placeholder="探索値" min="1" max="99">
+      <button class="search-button" id="search-btn">探索開始</button>
+    </div>
+    
+    <div class="hash-function">
+      <p>ハッシュ関数: <strong>h(key) = key % 10</strong></p>
+    </div>
+    
+    <div class="message-box" id="message"></div>
+    
+    <h3>元の配列:</h3>
+    <div class="original-array" id="original-array"></div>
+    
+    <h3>ハッシュテーブル:</h3>
+    <div class="visualization">
+      <div class="hash-table" id="hash-table"></div>
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      // 初期配列
+      const originalArray = [25, 38, 42, 13, 56, 72, 91, 17, 33, 64, 82, 23, 47, 31, 95];
+      
+      // DOM要素
+      const originalArrayEl = document.getElementById('original-array');
+      const hashTableEl = document.getElementById('hash-table');
+      const messageEl = document.getElementById('message');
+      const resetBtn = document.getElementById('reset-btn');
+      const animateBtn = document.getElementById('animate-btn');
+      const stepBtn = document.getElementById('step-btn');
+      const searchBtn = document.getElementById('search-btn');
+      const searchInput = document.getElementById('search-input');
+      
+      // ハッシュテーブル初期化
+      let hashTable = Array(10).fill().map(() => []);
+      
+      // アニメーション状態
+      let animationState = {
+        steps: [],
+        currentStep: -1,
+        isPlaying: false,
+        intervalId: null
+      };
+      
+      // ハッシュ関数
+      function hash(key) {
+        return key % 10;
+      }
+      
+      // UIの初期化
+      function initUI() {
+        // 元の配列を表示
+        originalArrayEl.innerHTML = '';
+        originalArray.forEach(item => {
+          const el = document.createElement('div');
+          el.className = 'array-item';
+          el.textContent = item;
+          el.dataset.value = item;
+          originalArrayEl.appendChild(el);
+        });
+        
+        // ハッシュテーブルを表示
+        hashTableEl.innerHTML = '';
+        for (let i = 0; i < 10; i++) {
+          const bucketEl = document.createElement('div');
+          bucketEl.className = 'bucket';
+          bucketEl.id = `bucket-${i}`;
+          
+          const headerEl = document.createElement('div');
+          headerEl.className = 'bucket-header';
+          headerEl.textContent = i;
+          
+          bucketEl.appendChild(headerEl);
+          hashTableEl.appendChild(bucketEl);
+        }
+        
+        // メッセージをクリア
+        messageEl.textContent = 'ハッシュテーブルに値を挿入するには「アニメーション実行」または「ステップ実行」ボタンをクリックしてください。';
+        messageEl.style.backgroundColor = '#e8f5e9';
+      }
+      
+      // アニメーションステップを設定
+      function setupAnimationSteps() {
+        const steps = [];
+        
+        // ステップ1: 元の配列からハッシュテーブルに挿入
+        originalArray.forEach((item, index) => {
+          const hashValue = hash(item);
+          
+          steps.push({
+            type: 'highlight-original',
+            value: item,
+            message: `配列の要素 ${item} を処理中...`
+          });
+          
+          steps.push({
+            type: 'hash-calculation',
+            value: item,
+            hashValue: hashValue,
+            message: `ハッシュ値の計算: h(${item}) = ${item} % 10 = ${hashValue}`
+          });
+          
+          steps.push({
+            type: 'insert-to-hash',
+            value: item,
+            hashValue: hashValue,
+            message: `値 ${item} をバケット ${hashValue} に挿入します`
+          });
+        });
+        
+        return steps;
+      }
+      
+      // 探索ステップを設定
+      function setupSearchSteps(searchValue) {
+        const steps = [];
+        const hashValue = hash(searchValue);
+        
+        steps.push({
+          type: 'search-start',
+          value: searchValue,
+          message: `値 ${searchValue} を探索します`
+        });
+        
+        steps.push({
+          type: 'hash-calculation',
+          value: searchValue,
+          hashValue: hashValue,
+          message: `ハッシュ値の計算: h(${searchValue}) = ${searchValue} % 10 = ${hashValue}`
+        });
+        
+        steps.push({
+          type: 'search-bucket',
+          value: searchValue,
+          hashValue: hashValue,
+          message: `バケット ${hashValue} を探索します`
+        });
+        
+        const bucket = hashTable[hashValue];
+        const found = bucket.includes(searchValue);
+        
+        if (found) {
+          steps.push({
+            type: 'search-result',
+            value: searchValue,
+            hashValue: hashValue,
+            found: true,
+            message: `値 ${searchValue} が見つかりました！`
+          });
+        } else {
+          steps.push({
+            type: 'search-result',
+            value: searchValue,
+            hashValue: hashValue,
+            found: false,
+            message: `値 ${searchValue} は見つかりませんでした。`
+          });
+        }
+        
+        return steps;
+      }
+      
+      // ステップを実行
+      function executeStep(step) {
+        // 全てをリセット
+        document.querySelectorAll('.array-item').forEach(el => {
+          el.classList.remove('highlight', 'search');
+        });
+        
+        document.querySelectorAll('.bucket').forEach(el => {
+          el.style.backgroundColor = '';
+        });
+        
+        document.querySelectorAll('.item').forEach(el => {
+          el.classList.remove('highlight', 'found', 'not-found');
+        });
+        
+        // メッセージを設定
+        messageEl.textContent = step.message;
+        messageEl.style.backgroundColor = '#e8f5e9';
+        
+        // ステップタイプに応じた処理
+        switch (step.type) {
+          case 'highlight-original':
+            const originalEl = Array.from(document.querySelectorAll('.array-item')).find(el => parseInt(el.dataset.value) === step.value);
+            if (originalEl) originalEl.classList.add('highlight');
+            break;
+            
+          case 'hash-calculation':
+            const calcEl = Array.from(document.querySelectorAll('.array-item')).find(el => parseInt(el.dataset.value) === step.value);
+            if (calcEl) calcEl.classList.add('highlight');
+            
+            document.getElementById(`bucket-${step.hashValue}`).style.backgroundColor = '#e3f2fd';
+            break;
+            
+          case 'insert-to-hash':
+            const originEl = Array.from(document.querySelectorAll('.array-item')).find(el => parseInt(el.dataset.value) === step.value);
+            if (originEl) originEl.classList.add('highlight');
+            
+            const bucketEl = document.getElementById(`bucket-${step.hashValue}`);
+            bucketEl.style.backgroundColor = '#e3f2fd';
+            
+            const itemEl = document.createElement('div');
+            itemEl.className = 'item highlight';
+            itemEl.textContent = step.value;
+            itemEl.dataset.value = step.value;
+            bucketEl.appendChild(itemEl);
+            
+            // ハッシュテーブルに値を追加
+            if (!hashTable[step.hashValue].includes(step.value)) {
+              hashTable[step.hashValue].push(step.value);
+            }
+            break;
+            
+          case 'search-start':
+            messageEl.style.backgroundColor = '#fff9c4';
+            break;
+            
+          case 'search-bucket':
+            document.getElementById(`bucket-${step.hashValue}`).style.backgroundColor = '#fff9c4';
+            break;
+            
+          case 'search-result':
+            const bucket = document.getElementById(`bucket-${step.hashValue}`);
+            bucket.style.backgroundColor = step.found ? '#e8f5e9' : '#ffebee';
+            
+            const items = bucket.querySelectorAll('.item');
+            items.forEach(item => {
+              if (parseInt(item.dataset.value) === step.value) {
+                item.classList.add(step.found ? 'found' : 'not-found');
+              }
+            });
+            
+            messageEl.style.backgroundColor = step.found ? '#e8f5e9' : '#ffebee';
+            break;
+        }
+      }
+      
+      // 次のステップへ
+      function nextStep() {
+        if (animationState.currentStep < animationState.steps.length - 1) {
+          animationState.currentStep++;
+          executeStep(animationState.steps[animationState.currentStep]);
+          return true;
+        }
+        return false;
+      }
+      
+      // リセットボタン
+      resetBtn.addEventListener('click', function() {
+        // アニメーションを停止
+        if (animationState.intervalId) {
+          clearInterval(animationState.intervalId);
+          animationState.intervalId = null;
+        }
+        
+        // 状態をリセット
+        animationState = {
+          steps: [],
+          currentStep: -1,
+          isPlaying: false,
+          intervalId: null
+        };
+        
+        // ハッシュテーブルをリセット
+        hashTable = Array(10).fill().map(() => []);
+        
+        // UIを初期化
+        initUI();
+        
+        // ボタンテキストをリセット
+        animateBtn.textContent = 'アニメーション実行';
+      });
+      
+      // アニメーション実行ボタン
+      animateBtn.addEventListener('click', function() {
+        if (animationState.isPlaying) {
+          // 再生中なら停止
+          clearInterval(animationState.intervalId);
+          animationState.intervalId = null;
+          animationState.isPlaying = false;
+          animateBtn.textContent = 'アニメーション実行';
+        } else {
+          // 初期状態ならステップを設定
+          if (animationState.steps.length === 0) {
+            animationState.steps = setupAnimationSteps();
+          }
+          
+          // 再生開始
+          animationState.isPlaying = true;
+          animateBtn.textContent = '一時停止';
+          
+          animationState.intervalId = setInterval(function() {
+            const hasMore = nextStep();
+            if (!hasMore) {
+              clearInterval(animationState.intervalId);
+              animationState.intervalId = null;
+              animationState.isPlaying = false;
+              animateBtn.textContent = 'アニメーション実行';
+            }
+          }, 1000);
+        }
+      });
+      
+      // ステップ実行ボタン
+      stepBtn.addEventListener('click', function() {
+        // アニメーション中なら停止
+        if (animationState.intervalId) {
+          clearInterval(animationState.intervalId);
+          animationState.intervalId = null;
+          animationState.isPlaying = false;
+          animateBtn.textContent = 'アニメーション実行';
+        }
+        
+        // 初期状態ならステップを設定
+        if (animationState.steps.length === 0) {
+          animationState.steps = setupAnimationSteps();
+        }
+        
+        // 次のステップを実行
+        nextStep();
+      });
+      
+      // 探索ボタン
+      searchBtn.addEventListener('click', function() {
+        const searchValue = parseInt(searchInput.value);
+        
+        if (isNaN(searchValue) || searchValue < 1 || searchValue > 99) {
+          messageEl.textContent = '1〜99の数値を入力してください。';
+          messageEl.style.backgroundColor = '#ffebee';
+          return;
+        }
+        
+        // アニメーション中なら停止
+        if (animationState.intervalId) {
+          clearInterval(animationState.intervalId);
+          animationState.intervalId = null;
+          animationState.isPlaying = false;
+          animateBtn.textContent = 'アニメーション実行';
+        }
+        
+        // ハッシュテーブルが空ならエラー
+        if (hashTable.every(bucket => bucket.length === 0)) {
+          messageEl.textContent = 'ハッシュテーブルが空です。先にデータを挿入してください。';
+          messageEl.style.backgroundColor = '#ffebee';
+          return;
+        }
+        
+        // 探索ステップを設定
+        animationState.steps = setupSearchSteps(searchValue);
+        animationState.currentStep = -1;
+        
+        // 再生開始
+        animationState.isPlaying = true;
+        
+        animationState.intervalId = setInterval(function() {
+          const hasMore = nextStep();
+          if (!hasMore) {
+            clearInterval(animationState.intervalId);
+            animationState.intervalId = null;
+            animationState.isPlaying = false;
+          }
+        }, 1000);
+      });
+      
+      // 初期化
+      initUI();
+    });
+  </script>
+</body>
+</html>
