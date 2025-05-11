@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>グラフの最短経路問題の図解</title>
+    <link rel="stylesheet" href="./../../styles.css">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <ul class="breadcrumb">
+        <li><a href="./../../">アルゴリズムの学習</a></li>
+        <li><a href="./../">グラフの最短経路問題</a></li>
+        <li>図解</li>
+    </ul>
+
+    <div class="container">
+        <h1>最短経路アルゴリズム図解</h1>
+        <div class="controls">
+            <label for="algorithm-select">アルゴリズム:</label>
+            <select id="algorithm-select">
+                <option value="dijkstra">ダイクストラ法</option>
+                </select>
+            <button id="run-button">アニメーション実行</button>
+            <button id="clear-button">クリア</button>
+        </div>
+        <div id="graph-visualization">
+            <div id="graph-container">
+                </div>
+            <div id="info-area">
+                <h2>処理ステップ</h2>
+                <p id="step-info">アルゴリズムを選択して実行ボタンを押してください。</p>
+                <h2>処理内容</h2>
+                <p id="action-info">-</p>
+            </div>
+        </div>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
