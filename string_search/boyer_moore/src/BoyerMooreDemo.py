@@ -39,7 +39,6 @@ def bad_character_table(pattern):
         bad_char[pattern[i]] = i
     return bad_char
 
-
 def good_suffix_table(pattern):
     # 良接尾辞ルールのテーブルを作成
     n = len(pattern)

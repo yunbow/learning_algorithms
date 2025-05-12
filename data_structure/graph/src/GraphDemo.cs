@@ -1,3 +1,6 @@
+// C#
+// データ構造: グラフ (Graph)
+
 using System;
 using System.Collections.Generic;
 using System.Linq;

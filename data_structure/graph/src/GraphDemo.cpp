@@ -1,3 +1,6 @@
+// C++
+// データ構造: グラフ (Graph)
+
 #include <iostream>
 #include <vector>
 #include <map>
