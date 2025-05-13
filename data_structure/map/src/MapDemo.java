@@ -3,7 +3,6 @@
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 class MapData {
     private Map<String, Integer> data;

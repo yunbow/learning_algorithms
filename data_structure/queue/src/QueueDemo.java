@@ -4,76 +4,76 @@
 import java.util.LinkedList;
 import java.util.Queue;
 
-public class QueueDemo {
-    private static class QueueData {
-        private Queue<Integer> data;
+class QueueData {
+    private Queue<Integer> data;
 
-        public QueueData() {
-            data = new LinkedList<>();
-        }
+    public QueueData() {
+        data = new LinkedList<>();
+    }
 
-        public Queue<Integer> get() {
-            return data;
-        }
+    public Queue<Integer> get() {
+        return data;
+    }
 
-        public int getIndex(Integer item) {
-            Integer[] array = data.toArray(new Integer[0]);
-            for (int i = 0; i < array.length; i++) {
-                if (array[i].equals(item)) {
-                    return i;
-                }
-            }
-            System.out.println("ERROR: " + item + " は範囲外です");
-            return -1;
-        }
-
-        public Integer getValue(int index) {
-            Integer[] array = data.toArray(new Integer[0]);
-            if (0 <= index && index < array.length) {
-                return array[index];
-            } else {
-                System.out.println("Error: インデックス " + index + " は範囲外です");
-                return null;
+    public int getIndex(Integer item) {
+        Integer[] array = data.toArray(new Integer[0]);
+        for (int i = 0; i < array.length; i++) {
+            if (array[i].equals(item)) {
+                return i;
             }
         }
+        System.out.println("ERROR: " + item + " は範囲外です");
+        return -1;
+    }
 
-        public boolean enqueue(Integer item) {
-            return data.offer(item);
-        }
-
-        public boolean dequeue() {
-            if (!isEmpty()) {
-                data.poll();
-                return true;
-            } else {
-                System.out.println("ERROR: キューが空です");
-                return false;
-            }
-        }
-
-        public Integer peek() {
-            if (!isEmpty()) {
-                return data.peek();
-            } else {
-                System.out.println("ERROR: キューが空です");
-                return null;
-            }
-        }
-
-        public boolean isEmpty() {
-            return data.isEmpty();
-        }
-
-        public int size() {
-            return data.size();
-        }
-
-        public boolean clear() {
-            data.clear();
-            return true;
+    public Integer getValue(int index) {
+        Integer[] array = data.toArray(new Integer[0]);
+        if (0 <= index && index < array.length) {
+            return array[index];
+        } else {
+            System.out.println("Error: インデックス " + index + " は範囲外です");
+            return null;
         }
     }
 
+    public boolean enqueue(Integer item) {
+        return data.offer(item);
+    }
+
+    public boolean dequeue() {
+        if (!isEmpty()) {
+            data.poll();
+            return true;
+        } else {
+            System.out.println("ERROR: キューが空です");
+            return false;
+        }
+    }
+
+    public Integer peek() {
+        if (!isEmpty()) {
+            return data.peek();
+        } else {
+            System.out.println("ERROR: キューが空です");
+            return null;
+        }
+    }
+
+    public boolean isEmpty() {
+        return data.isEmpty();
+    }
+
+    public int size() {
+        return data.size();
+    }
+
+    public boolean clear() {
+        data.clear();
+        return true;
+    }
+}
+
+public class QueueDemo {
     public static void main(String[] args) {
         System.out.println("Queue TEST -----> start");
 

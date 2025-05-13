@@ -3,11 +3,11 @@
 
 import java.util.*;
 
-public class BfsDemo {
+class GraphData {
     // 隣接ノードとその辺の重みを格納するマップ
     private Map<String, List<AbstractMap.SimpleEntry<String, Integer>>> data;
 
-    public BfsDemo() {
+    public GraphData() {
         data = new HashMap<>();
     }
 
@@ -193,12 +193,14 @@ public class BfsDemo {
 
         return allComponents;
     }
+}
 
+public class BfsDemo {
     public static void main(String[] args) {
         System.out.println("Bfs TEST -----> start");
 
         System.out.println("\nnew");
-        BfsDemo graphData = new BfsDemo();
+        GraphData graphData = new GraphData();
         System.out.println("  現在のデータ: " + graphData.get());
 
         System.out.println("\nadd_edge");

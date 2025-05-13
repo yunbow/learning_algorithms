@@ -4,10 +4,10 @@
 import java.util.HashSet;
 import java.util.Set;
 
-public class SetDemo {
+class SetData {
     private Set<Integer> data;
 
-    public SetDemo() {
+    public SetData() {
         data = new HashSet<>();
     }
 
@@ -68,12 +68,14 @@ public class SetDemo {
         data.clear();
         return true;
     }
+}
 
+public class SetDemo {
     public static void main(String[] args) {
         System.out.println("Set TEST -----> start");
 
         System.out.println("\nnew");
-        SetDemo setData = new SetDemo();
+        SetData setData = new SetData();
         System.out.println("  現在のデータ: " + setData.get());
 
         System.out.println("\nadd");

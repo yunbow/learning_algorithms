@@ -3,10 +3,10 @@
 
 import java.util.*;
 
-public class DfsDemo {
+class GraphData {
     private Map<String, List<Pair<String, Integer>>> data;
 
-    public DfsDemo() {
+    public GraphData() {
         data = new HashMap<>();
     }
 
@@ -178,11 +178,75 @@ public class DfsDemo {
         return connectedComponents;
     }
 
+    
+    // Helper classes
+    public static class Pair<F, S> {
+        public final F first;
+        public final S second;
+
+        public Pair(F first, S second) {
+            this.first = first;
+            this.second = second;
+        }
+
+        @Override
+        public String toString() {
+            return "(" + first + ", " + second + ")";
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            Pair<?, ?> pair = (Pair<?, ?>) o;
+            return Objects.equals(first, pair.first) && Objects.equals(second, pair.second);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(first, second);
+        }
+    }
+
+    public static class Edge {
+        public final String vertex1;
+        public final String vertex2;
+        public final int weight;
+
+        public Edge(String vertex1, String vertex2, int weight) {
+            this.vertex1 = vertex1;
+            this.vertex2 = vertex2;
+            this.weight = weight;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            Edge edge = (Edge) o;
+            return weight == edge.weight && 
+                   ((Objects.equals(vertex1, edge.vertex1) && Objects.equals(vertex2, edge.vertex2)) ||
+                    (Objects.equals(vertex1, edge.vertex2) && Objects.equals(vertex2, edge.vertex1)));
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(vertex1, vertex2, weight);
+        }
+
+        @Override
+        public String toString() {
+            return "(" + vertex1 + ", " + vertex2 + ", " + weight + ")";
+        }
+    }
+}
+
+public class DfsDemo {
     public static void main(String[] args) {
         System.out.println("Dfs TEST -----> start");
 
         System.out.println("\nnew");
-        DfsDemo graphData = new DfsDemo();
+        GraphData graphData = new GraphData();
         System.out.println("  現在のデータ: " + graphData.get());
 
         System.out.println("\nadd_edge");
@@ -245,66 +309,5 @@ public class DfsDemo {
         System.out.println("  連結成分: " + output);
 
         System.out.println("Dfs TEST <----- end");
-    }
-
-    // Helper classes
-    public static class Pair<F, S> {
-        public final F first;
-        public final S second;
-
-        public Pair(F first, S second) {
-            this.first = first;
-            this.second = second;
-        }
-
-        @Override
-        public String toString() {
-            return "(" + first + ", " + second + ")";
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
-            Pair<?, ?> pair = (Pair<?, ?>) o;
-            return Objects.equals(first, pair.first) && Objects.equals(second, pair.second);
-        }
-
-        @Override
-        public int hashCode() {
-            return Objects.hash(first, second);
-        }
-    }
-
-    public static class Edge {
-        public final String vertex1;
-        public final String vertex2;
-        public final int weight;
-
-        public Edge(String vertex1, String vertex2, int weight) {
-            this.vertex1 = vertex1;
-            this.vertex2 = vertex2;
-            this.weight = weight;
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
-            Edge edge = (Edge) o;
-            return weight == edge.weight && 
-                   ((Objects.equals(vertex1, edge.vertex1) && Objects.equals(vertex2, edge.vertex2)) ||
-                    (Objects.equals(vertex1, edge.vertex2) && Objects.equals(vertex2, edge.vertex1)));
-        }
-
-        @Override
-        public int hashCode() {
-            return Objects.hash(vertex1, vertex2, weight);
-        }
-
-        @Override
-        public String toString() {
-            return "(" + vertex1 + ", " + vertex2 + ", " + weight + ")";
-        }
     }
 }

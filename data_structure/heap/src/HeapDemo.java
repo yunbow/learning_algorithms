@@ -4,11 +4,11 @@
 import java.util.ArrayList;
 import java.util.List;
 
-public class HeapDemo {
+class HeapData {
     private List<Integer> data;
     private boolean isMinHeap;
 
-    public HeapDemo(boolean isMinHeap) {
+    public HeapData(boolean isMinHeap) {
         this.data = new ArrayList<>();
         this.isMinHeap = isMinHeap;
     }
@@ -157,12 +157,14 @@ public class HeapDemo {
         data.clear();
         return true;
     }
+}
 
+public class HeapDemo {
     public static void main(String[] args) {
         System.out.println("Heap TEST -----> start");
 
         System.out.println("\nmin heap: new");
-        HeapDemo minHeap = new HeapDemo(true);
+        HeapData minHeap = new HeapData(true);
         System.out.println("  現在のデータ: " + minHeap.get());
 
         System.out.println("\nmin heap: heapify");

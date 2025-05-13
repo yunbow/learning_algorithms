@@ -4,44 +4,44 @@
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
-
-public class HashSearchDemo {
     
-    static class ArrayData {
-        private int[] data;
-        
-        public ArrayData() {
-            this.data = new int[0];
-        }
-        
-        public int[] get() {
-            return this.data;
-        }
-        
-        public boolean set(int[] data) {
-            this.data = data;
-            return true;
-        }
-        
-        public int search(int target) {
-            // ハッシュテーブルの作成
-            Map<Integer, Integer> hashTable = new HashMap<>();
-            
-            // 配列の要素をハッシュテーブルに格納
-            // キーを要素の値、値をインデックスとする
-            for (int i = 0; i < this.data.length; i++) {
-                hashTable.put(this.data[i], i);
-            }
-            
-            // ハッシュテーブルを使って検索
-            if (hashTable.containsKey(target)) {
-                return hashTable.get(target);
-            } else {
-                return -1;
-            }
-        }
+class ArrayData {
+    private int[] data;
+    
+    public ArrayData() {
+        this.data = new int[0];
     }
     
+    public int[] get() {
+        return this.data;
+    }
+    
+    public boolean set(int[] data) {
+        this.data = data;
+        return true;
+    }
+    
+    public int search(int target) {
+        // ハッシュテーブルの作成
+        Map<Integer, Integer> hashTable = new HashMap<>();
+        
+        // 配列の要素をハッシュテーブルに格納
+        // キーを要素の値、値をインデックスとする
+        for (int i = 0; i < this.data.length; i++) {
+            hashTable.put(this.data[i], i);
+        }
+        
+        // ハッシュテーブルを使って検索
+        if (hashTable.containsKey(target)) {
+            return hashTable.get(target);
+        } else {
+            return -1;
+        }
+    }
+}
+
+public class HashSearchDemo {
+
     public static void main(String[] args) {
         System.out.println("HashSearch TEST -----> start");
         
