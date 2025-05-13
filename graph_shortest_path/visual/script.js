@@ -1,454 +1,477 @@
-document.addEventListener('DOMContentLoaded', () => {
-    const graphContainer = document.getElementById('graph-container');
-    const algorithmSelect = document.getElementById('algorithm-select');
-    const runButton = document.getElementById('run-button');
-    const clearButton = document.getElementById('clear-button');
-    const stepInfo = document.getElementById('step-info');
-    const actionInfo = document.getElementById('action-info');
-
-    // グラフデータ (ノードの位置、エッジ、重み)
-    // ノード: id, name, x (%), y (%)
-    // エッジ: from, to, weight
-    const graphData = {
+document.addEventListener('DOMContentLoaded', function() {
+    // グラフの構築
+    const graph = {
         nodes: [
-            { id: 'A', name: 'A', x: 10, y: 50 },
-            { id: 'B', name: 'B', x: 35, y: 20 },
-            { id: 'C', name: 'C', x: 35, y: 80 },
-            { id: 'D', name: 'D', x: 65, y: 20 },
-            { id: 'E', name: 'E', x: 65, y: 80 },
-            { id: 'F', name: 'F', x: 90, y: 50 },
+            { id: 0, x: 100, y: 250, name: 'S', heuristic: 8 },  // スタートノード
+            { id: 1, x: 250, y: 100, name: 'A', heuristic: 6 },
+            { id: 2, x: 250, y: 400, name: 'B', heuristic: 7 },
+            { id: 3, x: 400, y: 150, name: 'C', heuristic: 4 },
+            { id: 4, x: 400, y: 350, name: 'D', heuristic: 3 },
+            { id: 5, x: 550, y: 100, name: 'E', heuristic: 2 },
+            { id: 6, x: 550, y: 400, name: 'F', heuristic: 2 },
+            { id: 7, x: 700, y: 250, name: 'G', heuristic: 0 }   // ゴールノード
         ],
         edges: [
-            { from: 'A', to: 'B', weight: 7, id: 'AB' },
-            { from: 'A', to: 'C', weight: 3, id: 'AC' },
-            { from: 'B', to: 'A', weight: 7, id: 'BA' }, // 双方向の場合
-            { from: 'C', to: 'A', weight: 3, id: 'CA' }, // 双方向の場合
-            { from: 'B', to: 'D', weight: 2, id: 'BD' },
-            { from: 'D', to: 'B', weight: 2, id: 'DB' },
-            { from: 'B', to: 'C', weight: 1, id: 'BC' },
-            { from: 'C', to: 'B', weight: 1, id: 'CB' },
-            { from: 'C', to: 'E', weight: 5, id: 'CE' },
-            { from: 'E', to: 'C', weight: 5, id: 'EC' },
-            { from: 'D', to: 'E', weight: 2, id: 'DE' },
-            { from: 'E', to: 'D', weight: 2, id: 'ED' },
-            { from: 'D', to: 'F', weight: 6, id: 'DF' },
-            { from: 'F', to: 'D', weight: 6, id: 'FD' },
-            { from: 'E', to: 'F', weight: 8, id: 'EF' },
-            { from: 'F', to: 'E', weight: 8, id: 'FE' },
-        ],
-        startNode: 'A',
-        endNode: 'F' // 最短経路の終点ノード (オプション)
+            { from: 0, to: 1, cost: 2 },
+            { from: 0, to: 2, cost: 3 },
+            { from: 1, to: 3, cost: 3 },
+            { from: 2, to: 3, cost: 5 },
+            { from: 2, to: 4, cost: 2 },
+            { from: 3, to: 5, cost: 3 },
+            { from: 3, to: 4, cost: 4 },
+            { from: 4, to: 6, cost: 4 },
+            { from: 5, to: 7, cost: 4 },
+            { from: 6, to: 7, cost: 3 }
+        ]
     };
 
-    let animationSteps = [];
+    // A*アルゴリズムの状態
+    let openSet = [];
+    let closedSet = [];
+    let startNode = graph.nodes[0];
+    let goalNode = graph.nodes[7];
+    let cameFrom = new Map();
+    let gScore = new Map();
+    let fScore = new Map();
+    let currentNode = null;
+    let path = [];
+    let algorithmSteps = [];
     let currentStep = 0;
-    let isAnimating = false;
-    const ANIMATION_DELAY = 1500; // ms
+    let isRunning = false;
+    let isPaused = false;
+    let animationSpeed = 5;
+    let animationInterval = null;
 
-    // グラフの初期描画
+    // DOM要素
+    const runButton = document.getElementById('run-animation');
+    const stepButton = document.getElementById('step-button');
+    const clearButton = document.getElementById('clear-button');
+    const speedSlider = document.getElementById('speed');
+    const speedValue = document.getElementById('speed-value');
+    const progressBar = document.getElementById('progress-bar');
+    const description = document.getElementById('description');
+    const exploredCount = document.getElementById('explored-count');
+    const pathLength = document.getElementById('path-length');
+    const svg = document.getElementById('graph');
+
+    // グラフを描画
     function drawGraph() {
-        graphContainer.innerHTML = ''; // 既存の描画をクリア
-
-        // ノードを描画
-        graphData.nodes.forEach(node => {
-            const nodeEl = document.createElement('div');
-            nodeEl.classList.add('node');
-            nodeEl.id = `node-${node.id}`;
-            nodeEl.style.left = `${node.x}%`;
-            nodeEl.style.top = `${node.y}%`;
-            nodeEl.textContent = node.name;
-            if (node.id === graphData.startNode) nodeEl.classList.add('start');
-            if (node.id === graphData.endNode) nodeEl.classList.add('end');
-            graphContainer.appendChild(nodeEl);
-        });
+        svg.innerHTML = '';
 
         // エッジを描画
-        const drawnEdges = new Set(); // 重複描画を防ぐ (A-BとB-Aが同じ線にならないように)
-        graphData.edges.forEach(edge => {
-            const pair = [edge.from, edge.to].sort().join('-');
-            if (drawnEdges.has(pair)) return;
-            drawnEdges.add(pair);
+        graph.edges.forEach(edge => {
+            const fromNode = graph.nodes[edge.from];
+            const toNode = graph.nodes[edge.to];
+            const edgeClass = path.some(p => p.from === edge.from && p.to === edge.to || p.from === edge.to && p.to === edge.from) ? 'edge-path' : 
+                           (closedSet.includes(fromNode) && closedSet.includes(toNode)) ? 'edge-confirmed' : 
+                           (openSet.includes(fromNode) || openSet.includes(toNode)) ? 'edge-running' : 'edge-unconfirmed';
+            
+            // エッジ線
+            const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            line.setAttribute('x1', fromNode.x);
+            line.setAttribute('y1', fromNode.y);
+            line.setAttribute('x2', toNode.x);
+            line.setAttribute('y2', toNode.y);
+            line.setAttribute('class', edgeClass);
+            svg.appendChild(line);
 
-            const nodeFrom = graphData.nodes.find(n => n.id === edge.from);
-            const nodeTo = graphData.nodes.find(n => n.id === edge.to);
+            // エッジのコスト表示
+            const costX = (fromNode.x + toNode.x) / 2;
+            const costY = (fromNode.y + toNode.y) / 2;
+            const cost = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+            cost.setAttribute('x', costX);
+            cost.setAttribute('y', costY);
+            cost.setAttribute('class', 'edge-cost');
+            cost.textContent = edge.cost;
+            svg.appendChild(cost);
+        });
 
-            if (!nodeFrom || !nodeTo) return;
+        // ノードを描画
+        graph.nodes.forEach(node => {
+            const nodeGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+            nodeGroup.setAttribute('class', 'node');
 
-            const nodeFromEl = document.getElementById(`node-${nodeFrom.id}`);
-            const nodeToEl = document.getElementById(`node-${nodeTo.id}`);
-
-            // ノードの中心座標を取得
-            const x1 = nodeFrom.x + (nodeFromEl.offsetWidth / graphContainer.offsetWidth * 100) / 2;
-            const y1 = nodeFrom.y + (nodeFromEl.offsetHeight / graphContainer.offsetHeight * 100) / 2;
-            const x2 = nodeTo.x + (nodeToEl.offsetWidth / graphContainer.offsetWidth * 100) / 2;
-            const y2 = nodeTo.y + (nodeToEl.offsetHeight / graphContainer.offsetHeight * 100) / 2;
-
-            const length = Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2)) * (graphContainer.offsetWidth / 100);
-            const angle = Math.atan2(y2 - y1, x2 - x1) * (180 / Math.PI);
-
-            const edgeEl = document.createElement('div');
-            edgeEl.classList.add('edge');
-            edgeEl.id = `edge-${edge.id}`; // または edge-${edge.from}-${edge.to}
-            edgeEl.style.left = `${x1}%`;
-            edgeEl.style.top = `${y1}%`;
-            edgeEl.style.width = `${length}px`;
-            edgeEl.style.transform = `rotate(${angle}deg)`;
-            graphContainer.appendChild(edgeEl);
-
-            // 重みをエッジの中間点に表示
-            const weightEl = document.createElement('div');
-            weightEl.classList.add('edge-weight');
-            weightEl.textContent = edge.weight;
-            // 重みの位置を調整 (線の中心、少しオフセット)
-            const midX = (x1 + x2) / 2;
-            const midY = (y1 + y2) / 2;
-            weightEl.style.left = `${midX}%`;
-            weightEl.style.top = `${midY}%`;
-            weightEl.style.transform = `translate(-50%, -50%) rotate(${-angle}deg)`; // 文字が回転しないように
-             if (angle > 90 || angle < -90) { // 上下反転する場合の補正
-                weightEl.style.transform = `translate(-50%, -50%) rotate(${-angle+180}deg)`;
+            let nodeClass = '';
+            if (node === startNode) {
+                nodeClass = 'node-start';
+            } else if (node === goalNode) {
+                nodeClass = 'node-goal';
+            } else if (path.some(p => p.from === node.id || p.to === node.id)) {
+                nodeClass = 'node-selected';
+            } else if (closedSet.includes(node)) {
+                nodeClass = 'node-confirmed';
+            } else if (openSet.includes(node)) {
+                nodeClass = 'node-running';
+            } else {
+                nodeClass = 'node-unconfirmed';
             }
-            graphContainer.appendChild(weightEl);
-        });
-        setInfo("初期状態", "グラフが描画されました。アルゴリズムを選択して実行してください。");
-    }
 
-    function setInfo(stepText, actionText) {
-        stepInfo.textContent = stepText;
-        actionInfo.textContent = actionText;
-    }
+            // ノード円
+            const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+            circle.setAttribute('cx', node.x);
+            circle.setAttribute('cy', node.y);
+            circle.setAttribute('r', 20);
+            circle.setAttribute('class', nodeClass);
+            nodeGroup.appendChild(circle);
 
-    function highlightNode(nodeId, type = 'visited') { // type: visited, current, path
-        const nodeEl = document.getElementById(`node-${nodeId}`);
-        if (nodeEl) {
-            nodeEl.classList.remove('visited', 'current', 'path'); // Reset previous types
-            nodeEl.classList.add(type);
-        }
-    }
+            // ノード名
+            const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+            text.setAttribute('x', node.x);
+            text.setAttribute('y', node.y);
+            text.setAttribute('class', 'node-name');
+            text.textContent = node.name;
+            nodeGroup.appendChild(text);
 
-    function highlightEdge(fromNodeId, toNodeId, type = 'highlighted') { // type: highlighted, path
-        const edgeId1 = `edge-${fromNodeId}-${toNodeId}`;
-        const edgeId2 = `edge-${toNodeId}-${fromNodeId}`;
-        const edgeData1 = graphData.edges.find(e => e.id === `${fromNodeId}${toNodeId}`);
-        const edgeData2 = graphData.edges.find(e => e.id === `${toNodeId}${fromNodeId}`);
-
-
-        let edgeEl = document.getElementById(edgeData1 ? `edge-${edgeData1.id}` : edgeId1);
-        if (!edgeEl && edgeData2) {
-             edgeEl = document.getElementById(`edge-${edgeData2.id}`);
-        }
-
-
-        if (edgeEl) {
-            edgeEl.classList.remove('highlighted', 'path'); // Reset previous types
-            edgeEl.classList.add(type);
-        }
-    }
-
-    function clearHighlights() {
-        graphData.nodes.forEach(node => {
-            const nodeEl = document.getElementById(`node-${node.id}`);
-            if (nodeEl) {
-                nodeEl.classList.remove('visited', 'current', 'path');
-                if (node.id === graphData.startNode) nodeEl.classList.add('start');
-                else if (node.id === graphData.endNode) nodeEl.classList.add('end');
-                else nodeEl.className = 'node'; // 基本クラスのみ
+            // ヒューリスティック値
+            if (node !== goalNode) {
+                const heuristicText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                heuristicText.setAttribute('x', node.x);
+                heuristicText.setAttribute('y', node.y + 30);
+                heuristicText.setAttribute('class', 'node-heuristic');
+                heuristicText.textContent = `h=${node.heuristic}`;
+                nodeGroup.appendChild(heuristicText);
             }
-        });
-        const drawnEdges = new Set();
-        graphData.edges.forEach(edge => {
-            const pair = [edge.from, edge.to].sort().join('-');
-            if (drawnEdges.has(pair)) return;
-            drawnEdges.add(pair);
 
-            const edgeEl = document.getElementById(`edge-${edge.id}`) || document.getElementById(`edge-${edge.to}${edge.from}`);
-            if (edgeEl) {
-                 edgeEl.className = 'edge'; // 基本クラスのみ
+            // F値（f = g + h）を表示
+            if (fScore.has(node.id)) {
+                const gValue = gScore.get(node.id);
+                const fValue = fScore.get(node.id);
+                const fScoreText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                fScoreText.setAttribute('x', node.x);
+                fScoreText.setAttribute('y', node.y - 30);
+                fScoreText.setAttribute('class', 'node-f-score');
+                fScoreText.textContent = `g=${gValue}, f=${fValue}`;
+                nodeGroup.appendChild(fScoreText);
             }
+
+            svg.appendChild(nodeGroup);
         });
     }
 
-
-    // ダイクストラ法の実装
-    function dijkstra(startNodeId, endNodeId) {
-        animationSteps = [];
-        const distances = {};
-        const predecessors = {};
-        const visited = new Set();
-        const pq = new PriorityQueue(); // 簡易的な優先度付きキュー
-
-        // 初期化
-        graphData.nodes.forEach(node => {
-            distances[node.id] = Infinity;
-            predecessors[node.id] = null;
+    // A*アルゴリズムのステップを記録
+    function prepareAStarAlgorithm() {
+        algorithmSteps = [];
+        openSet = [startNode];
+        closedSet = [];
+        cameFrom = new Map();
+        
+        // 初期化: gScore[start] = 0, fScore[start] = heuristic[start]
+        gScore = new Map();
+        fScore = new Map();
+        graph.nodes.forEach(node => {
+            gScore.set(node.id, Infinity);
+            fScore.set(node.id, Infinity);
         });
-        distances[startNodeId] = 0;
-        pq.enqueue(startNodeId, 0);
+        gScore.set(startNode.id, 0);
+        fScore.set(startNode.id, startNode.heuristic);
 
-        animationSteps.push({
-            type: 'init',
-            distances: { ...distances },
-            message: `初期化: ${startNodeId} の距離を0、他を無限大に設定。`
+        path = [];
+        currentNode = null;
+
+        // 初期状態を記録
+        algorithmSteps.push({
+            description: 'アルゴリズムを開始します。スタートノードをオープンセットに追加します。',
+            openSet: [...openSet],
+            closedSet: [...closedSet],
+            currentNode: null,
+            path: [],
+            gScore: new Map(gScore),
+            fScore: new Map(fScore),
+            cameFrom: new Map(cameFrom)
         });
 
-        let stepCounter = 1;
+        // A*アルゴリズムを実行し、各ステップを記録
+        while (openSet.length > 0) {
+            // fスコアが最小のノードを選択
+            currentNode = openSet.reduce((min, node) => 
+                fScore.get(node.id) < fScore.get(min.id) ? node : min, openSet[0]);
+            
+            // ゴールに到達した場合
+            if (currentNode === goalNode) {
+                // 最終パスを再構築
+                reconstructPath();
+                
+                algorithmSteps.push({
+                    description: 'ゴールに到達しました！最短経路が見つかりました。',
+                    openSet: [...openSet],
+                    closedSet: [...closedSet],
+                    currentNode: currentNode,
+                    path: [...path],
+                    gScore: new Map(gScore),
+                    fScore: new Map(fScore),
+                    cameFrom: new Map(cameFrom)
+                });
+                break;
+            }
 
-        while (!pq.isEmpty()) {
-            const { element: currentNodeId, priority: currentDistance } = pq.dequeue();
+            // 現在のノードをオープンセットから削除、クローズドセットに追加
+            openSet = openSet.filter(node => node !== currentNode);
+            closedSet.push(currentNode);
 
-            if (visited.has(currentNodeId)) continue;
-            visited.add(currentNodeId);
-
-            animationSteps.push({
-                type: 'visit_node',
-                nodeId: currentNodeId,
-                distance: currentDistance,
-                message: `ステップ ${stepCounter++}: ノード ${currentNodeId} を処理 (現在距離: ${currentDistance})。`
+            // 現在のノードの隣接ノードを探索
+            const neighbors = getNeighbors(currentNode);
+            
+            algorithmSteps.push({
+                description: `ノード${currentNode.name}を処理しています。このノードをクローズドセットに移動します。`,
+                openSet: [...openSet],
+                closedSet: [...closedSet],
+                currentNode: currentNode,
+                path: [],
+                gScore: new Map(gScore),
+                fScore: new Map(fScore),
+                cameFrom: new Map(cameFrom)
             });
 
-            if (currentNodeId === endNodeId) {
-                 animationSteps.push({
-                    type: 'target_found',
-                    nodeId: currentNodeId,
-                    message: `目標ノード ${endNodeId} に到達しました。`
-                });
-                break; // 終点に到達したら終了
-            }
+            neighbors.forEach(neighbor => {
+                // 隣接ノードがクローズドセットにある場合はスキップ
+                if (closedSet.includes(neighbor.node)) {
+                    return;
+                }
 
-            // 隣接ノードの処理
-            graphData.edges
-                .filter(edge => edge.from === currentNodeId)
-                .forEach(edge => {
-                    const neighborNodeId = edge.to;
-                    const weight = edge.weight;
-                    const distanceThroughCurrent = currentDistance + weight;
+                // 現在のノードから隣接ノードへの暫定的なgスコア
+                const tentativeGScore = gScore.get(currentNode.id) + neighbor.cost;
 
-                    animationSteps.push({
-                        type: 'check_edge',
-                        from: currentNodeId,
-                        to: neighborNodeId,
-                        weight: weight,
-                        newDist: distanceThroughCurrent,
-                        oldDist: distances[neighborNodeId],
-                        message: `  エッジ ${currentNodeId} -> ${neighborNodeId} (重み ${weight}) を確認。`
-                    });
+                // より良い経路が見つかった場合
+                if (tentativeGScore < gScore.get(neighbor.node.id)) {
+                    // この経路を記録
+                    cameFrom.set(neighbor.node.id, { node: currentNode, edge: neighbor.edge });
+                    gScore.set(neighbor.node.id, tentativeGScore);
+                    fScore.set(neighbor.node.id, tentativeGScore + neighbor.node.heuristic);
 
-                    if (distanceThroughCurrent < distances[neighborNodeId]) {
-                        distances[neighborNodeId] = distanceThroughCurrent;
-                        predecessors[neighborNodeId] = currentNodeId;
-                        pq.enqueue(neighborNodeId, distanceThroughCurrent);
-                        animationSteps.push({
-                            type: 'update_distance',
-                            nodeId: neighborNodeId,
-                            newDistance: distanceThroughCurrent,
-                            predecessor: currentNodeId,
-                            message: `    ノード ${neighborNodeId} の距離を ${distanceThroughCurrent} に更新 (経由: ${currentNodeId})。`
+                    // 隣接ノードがオープンセットにない場合は追加
+                    if (!openSet.includes(neighbor.node)) {
+                        openSet.push(neighbor.node);
+                        
+                        algorithmSteps.push({
+                            description: `ノード${neighbor.node.name}をオープンセットに追加します。g(${neighbor.node.name})=${tentativeGScore}, f(${neighbor.node.name})=${tentativeGScore + neighbor.node.heuristic}`,
+                            openSet: [...openSet],
+                            closedSet: [...closedSet],
+                            currentNode: currentNode,
+                            path: [],
+                            gScore: new Map(gScore),
+                            fScore: new Map(fScore),
+                            cameFrom: new Map(cameFrom)
                         });
                     } else {
-                         animationSteps.push({
-                            type: 'no_update',
-                            nodeId: neighborNodeId,
-                            message: `    ノード ${neighborNodeId} の距離は更新されません (${distances[neighborNodeId]} <= ${distanceThroughCurrent})。`
+                        algorithmSteps.push({
+                            description: `ノード${neighbor.node.name}への新しい良い経路が見つかりました。g(${neighbor.node.name})=${tentativeGScore}, f(${neighbor.node.name})=${tentativeGScore + neighbor.node.heuristic}`,
+                            openSet: [...openSet],
+                            closedSet: [...closedSet],
+                            currentNode: currentNode,
+                            path: [],
+                            gScore: new Map(gScore),
+                            fScore: new Map(fScore),
+                            cameFrom: new Map(cameFrom)
                         });
                     }
+                }
+            });
+
+            // オープンセットが空の場合
+            if (openSet.length === 0) {
+                algorithmSteps.push({
+                    description: 'オープンセットが空になりました。経路が見つかりませんでした。',
+                    openSet: [],
+                    closedSet: [...closedSet],
+                    currentNode: null,
+                    path: [],
+                    gScore: new Map(gScore),
+                    fScore: new Map(fScore),
+                    cameFrom: new Map(cameFrom)
                 });
-        }
-
-        // 最短経路の再構築 (終点がある場合)
-        if (endNodeId && distances[endNodeId] !== Infinity) {
-            const path = [];
-            let current = endNodeId;
-            while (current) {
-                path.unshift(current);
-                if (predecessors[current] && current !== startNodeId) {
-                     animationSteps.push({
-                        type: 'path_reconstruct_edge',
-                        from: predecessors[current],
-                        to: current,
-                        message: `経路復元: ${predecessors[current]} -> ${current}`
-                    });
-                }
-                current = predecessors[current];
             }
-             animationSteps.push({
-                type: 'path_reconstruct_done',
-                path: path,
-                totalDistance: distances[endNodeId],
-                message: `最短経路: ${path.join(' -> ')} (合計距離: ${distances[endNodeId]})`
-            });
-        } else if (endNodeId) {
-            animationSteps.push({
-                type: 'target_not_reachable',
-                message: `目標ノード ${endNodeId} には到達できませんでした。`
-            });
-        }
-
-        return animationSteps;
-    }
-
-    // 簡易的な優先度付きキューの実装
-    class PriorityQueue {
-        constructor() {
-            this.items = [];
-        }
-        enqueue(element, priority) {
-            const queueElement = { element, priority };
-            let added = false;
-            for (let i = 0; i < this.items.length; i++) {
-                if (this.items[i].priority > queueElement.priority) {
-                    this.items.splice(i, 0, queueElement);
-                    added = true;
-                    break;
-                }
-            }
-            if (!added) {
-                this.items.push(queueElement);
-            }
-        }
-        dequeue() {
-            if (this.isEmpty()) return null;
-            return this.items.shift();
-        }
-        isEmpty() {
-            return this.items.length === 0;
         }
     }
 
-    async function runAnimation() {
-        if (isAnimating) return;
-        isAnimating = true;
-        runButton.disabled = true;
-        clearButton.disabled = true;
-        clearHighlights(); // 前のアニメーションのハイライトをクリア
+    // 最短経路を再構築
+    function reconstructPath() {
+        path = [];
+        let current = goalNode.id;
+        
+        while (current !== startNode.id) {
+            const prev = cameFrom.get(current);
+            path.push({
+                from: prev.node.id, 
+                to: current,
+                node: graph.nodes[current]
+            });
+            current = prev.node.id;
+        }
+        
+        path.reverse();
+    }
 
-        const selectedAlgorithm = algorithmSelect.value;
-        if (selectedAlgorithm === 'dijkstra') {
-            animationSteps = dijkstra(graphData.startNode, graphData.endNode);
+    // ノードの隣接ノードとエッジを取得
+    function getNeighbors(node) {
+        const neighbors = [];
+        graph.edges.forEach(edge => {
+            if (edge.from === node.id) {
+                neighbors.push({
+                    node: graph.nodes[edge.to],
+                    cost: edge.cost,
+                    edge: edge
+                });
+            } else if (edge.to === node.id) {
+                // 双方向グラフの場合
+                neighbors.push({
+                    node: graph.nodes[edge.from],
+                    cost: edge.cost,
+                    edge: edge
+                });
+            }
+        });
+        return neighbors;
+    }
+
+    // アルゴリズムのステップを実行
+    function executeStep() {
+        if (currentStep < algorithmSteps.length) {
+            const step = algorithmSteps[currentStep];
+            
+            // 状態を更新
+            openSet = step.openSet;
+            closedSet = step.closedSet;
+            currentNode = step.currentNode;
+            path = step.path;
+            gScore = new Map(step.gScore);
+            fScore = new Map(step.fScore);
+            cameFrom = new Map(step.cameFrom);
+            
+            // 説明を更新
+            description.textContent = step.description;
+            
+            // 探索済みノード数と最短経路長を更新
+            exploredCount.textContent = closedSet.length;
+            if (path.length > 0) {
+                let totalCost = 0;
+                path.forEach(p => {
+                    const edge = graph.edges.find(e => 
+                        (e.from === p.from && e.to === p.to) || 
+                        (e.from === p.to && e.to === p.from));
+                    if (edge) {
+                        totalCost += edge.cost;
+                    }
+                });
+                pathLength.textContent = totalCost;
+            } else {
+                pathLength.textContent = '-';
+            }
+            
+            // グラフを更新
+            drawGraph();
+            
+            // プログレスバーを更新
+            progressBar.style.width = `${(currentStep + 1) / algorithmSteps.length * 100}%`;
+            
+            currentStep++;
+            
+            return currentStep >= algorithmSteps.length;
+        }
+        return true;
+    }
+
+    // アニメーションの実行
+    function runAnimation() {
+        if (isPaused) {
+            // 一時停止状態から再開
+            isPaused = false;
+            runButton.textContent = '一時停止';
+            animationInterval = setInterval(() => {
+                const isFinished = executeStep();
+                if (isFinished) {
+                    clearInterval(animationInterval);
+                    isRunning = false;
+                    runButton.textContent = 'アニメーション実行';
+                }
+            }, 1000 / animationSpeed);
+        } else if (!isRunning) {
+            // 新しいアニメーションを開始
+            isRunning = true;
+            runButton.textContent = '一時停止';
+            if (currentStep === algorithmSteps.length) {
+                // 終了していたら最初から
+                resetAlgorithm();
+            }
+            animationInterval = setInterval(() => {
+                const isFinished = executeStep();
+                if (isFinished) {
+                    clearInterval(animationInterval);
+                    isRunning = false;
+                    runButton.textContent = 'アニメーション実行';
+                }
+            }, 1000 / animationSpeed);
         } else {
-            setInfo("エラー", "選択されたアルゴリズムはまだ実装されていません。");
-            isAnimating = false;
-            runButton.disabled = false;
-            clearButton.disabled = false;
-            return;
+            // 実行中なら一時停止
+            clearInterval(animationInterval);
+            isPaused = true;
+            isRunning = false;
+            runButton.textContent = 'アニメーション再開';
         }
+    }
 
+    // ステップ実行
+    function stepExecution() {
+        if (isRunning) {
+            clearInterval(animationInterval);
+            isRunning = false;
+            isPaused = true;
+            runButton.textContent = 'アニメーション再開';
+        }
+        
+        if (currentStep === algorithmSteps.length) {
+            resetAlgorithm();
+        }
+        
+        executeStep();
+    }
+
+    // アルゴリズムをリセット
+    function resetAlgorithm() {
+        if (isRunning) {
+            clearInterval(animationInterval);
+            isRunning = false;
+            isPaused = false;
+        }
+        
         currentStep = 0;
-        await playNextStep();
+        openSet = [];
+        closedSet = [];
+        path = [];
+        currentNode = null;
+        
+        description.textContent = 'A*アルゴリズムを開始するには、「アニメーション実行」または「ステップ実行」ボタンをクリックしてください。';
+        exploredCount.textContent = '0';
+        pathLength.textContent = '-';
+        progressBar.style.width = '0%';
+        
+        runButton.textContent = 'アニメーション実行';
+        
+        drawGraph();
     }
 
-    async function playNextStep() {
-        if (currentStep >= animationSteps.length) {
-            isAnimating = false;
-            runButton.disabled = false;
-            clearButton.disabled = false;
-            // 最終ステップで経路全体をハイライトする処理はここで行うか、
-            // dijkstra の path_reconstruct_done で行う
-            const finalStep = animationSteps[animationSteps.length -1];
-            if (finalStep && finalStep.type === 'path_reconstruct_done' && finalStep.path) {
-                highlightShortestPath(finalStep.path);
-                setInfo(`完了 (ステップ ${currentStep}/${animationSteps.length})`, finalStep.message);
-            } else if (finalStep && finalStep.type === 'target_not_reachable') {
-                 setInfo(`完了 (ステップ ${currentStep}/${animationSteps.length})`, finalStep.message);
-            } else if (finalStep) {
-                setInfo(`完了 (ステップ ${currentStep}/${animationSteps.length})`, finalStep.message || "アニメーション終了");
-            }
-
-            return;
-        }
-
-        const step = animationSteps[currentStep];
-        setInfo(`ステップ ${currentStep + 1}/${animationSteps.length}`, step.message);
-
-        // アニメーション処理
-        clearNodeEdgeHighlights(); // 毎回クリアして現在の状態のみ表示
-
-        if (step.type === 'init') {
-            // 初期化は特に視覚的変更なし（メッセージのみ）
-        } else if (step.type === 'visit_node') {
-            highlightNode(step.nodeId, 'current'); // 現在処理中のノード
-            setTimeout(() => highlightNode(step.nodeId, 'visited'), ANIMATION_DELAY / 2); // 少し遅れて訪問済みに
-        } else if (step.type === 'check_edge') {
-            highlightNode(step.from, 'current');
-            highlightEdge(step.from, step.to, 'highlighted');
-        } else if (step.type === 'update_distance') {
-            highlightNode(step.predecessor, 'visited'); // 前のノードは訪問済み
-            highlightNode(step.nodeId, 'current'); // 更新対象ノード
-            highlightEdge(step.predecessor, step.nodeId, 'highlighted');
-        } else if (step.type === 'no_update') {
-            //特にハイライト変更なし、メッセージのみ
-        } else if (step.type === 'target_found') {
-            highlightNode(step.nodeId, 'end');
-        } else if (step.type === 'path_reconstruct_edge') {
-            highlightNode(step.from, 'path');
-            highlightNode(step.to, 'path');
-            highlightEdge(step.from, step.to, 'path');
-        } else if (step.type === 'path_reconstruct_done') {
-            // 経路復元完了時は、最終的なパスを強調表示
-            highlightShortestPath(step.path);
-        }
-
-
-        currentStep++;
-        await new Promise(resolve => setTimeout(resolve, ANIMATION_DELAY));
-        playNextStep();
-    }
-
-    function clearNodeEdgeHighlights() {
-        // 現在のノードや一時的なエッジハイライトのみクリア
-        graphData.nodes.forEach(node => {
-            const nodeEl = document.getElementById(`node-${node.id}`);
-            if (nodeEl && !nodeEl.classList.contains('path') && !nodeEl.classList.contains('start') && !nodeEl.classList.contains('end') && !nodeEl.classList.contains('visited')) {
-                nodeEl.classList.remove('current');
-            }
-             if (nodeEl && nodeEl.classList.contains('current') && !nodeEl.classList.contains('visited')){
-                 // current のまま残す場合がある
-            }
-        });
-        const drawnEdges = new Set();
-        graphData.edges.forEach(edge => {
-            const pair = [edge.from, edge.to].sort().join('-');
-            if (drawnEdges.has(pair)) return;
-            drawnEdges.add(pair);
-            const edgeEl = document.getElementById(`edge-${edge.id}`) || document.getElementById(`edge-${edge.to}${edge.from}`);
-            if (edgeEl && !edgeEl.classList.contains('path')) {
-                edgeEl.classList.remove('highlighted');
-            }
-        });
-    }
-
-
-    function highlightShortestPath(pathArray) {
-        if (!pathArray || pathArray.length === 0) return;
-        for (let i = 0; i < pathArray.length; i++) {
-            highlightNode(pathArray[i], 'path');
-            if (i > 0) {
-                highlightEdge(pathArray[i-1], pathArray[i], 'path');
-            }
-        }
-        // Start and End nodes might need special styling if they are part of the path
-        const startNodeEl = document.getElementById(`node-${graphData.startNode}`);
-        const endNodeEl = document.getElementById(`node-${graphData.endNode}`);
-        if (startNodeEl && pathArray.includes(graphData.startNode)) startNodeEl.classList.add('path', 'start');
-        if (endNodeEl && pathArray.includes(graphData.endNode)) endNodeEl.classList.add('path', 'end');
-
-    }
-
-
-    function clearAll() {
-        isAnimating = false; // アニメーション中なら停止
-        currentStep = 0;
-        animationSteps = [];
-        clearHighlights();
-        drawGraph(); // グラフを再描画して初期状態に戻す
-        setInfo("クリア", "グラフが初期化されました。");
-        runButton.disabled = false;
-        clearButton.disabled = false;
-    }
-
-    // イベントリスナー
+    // イベントリスナーの設定
     runButton.addEventListener('click', runAnimation);
-    clearButton.addEventListener('click', clearAll);
+    stepButton.addEventListener('click', stepExecution);
+    clearButton.addEventListener('click', resetAlgorithm);
+    
+    speedSlider.addEventListener('input', function() {
+        animationSpeed = parseInt(this.value);
+        speedValue.textContent = this.value;
+        
+        if (isRunning && !isPaused) {
+            clearInterval(animationInterval);
+            animationInterval = setInterval(() => {
+                const isFinished = executeStep();
+                if (isFinished) {
+                    clearInterval(animationInterval);
+                    isRunning = false;
+                    runButton.textContent = 'アニメーション実行';
+                }
+            }, 1000 / animationSpeed);
+        }
+    });
 
     // 初期化
+    prepareAStarAlgorithm();
     drawGraph();
 });

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>グラフの最短経路問題の図解</title>
+    <title>グラフ最短経路の図解(A*)</title>
     <link rel="stylesheet" href="./../../styles.css">
     <link rel="stylesheet" href="styles.css">
 </head>
@@ -15,26 +15,44 @@
     </ul>
 
     <div class="container">
-        <h1>最短経路アルゴリズム図解</h1>
+        <h1>グラフ最短経路の図解(A*)</h1>
+        
         <div class="controls">
-            <label for="algorithm-select">アルゴリズム:</label>
-            <select id="algorithm-select">
-                <option value="dijkstra">ダイクストラ法</option>
-                </select>
-            <button id="run-button">アニメーション実行</button>
-            <button id="clear-button">クリア</button>
+            <button id="run-animation" class="button-primary">アニメーション実行</button>
+            <button id="step-button" class="button-primary">ステップ実行</button>
+            <button id="clear-button" class="button-danger">クリア</button>
         </div>
-        <div id="graph-visualization">
-            <div id="graph-container">
-                </div>
-            <div id="info-area">
-                <h2>処理ステップ</h2>
-                <p id="step-info">アルゴリズムを選択して実行ボタンを押してください。</p>
-                <h2>処理内容</h2>
-                <p id="action-info">-</p>
+        
+        <div class="speed-control">
+            <label for="speed">速度調整:</label>
+            <input type="range" id="speed" min="1" max="10" value="5">
+            <span id="speed-value">5</span>
+        </div>
+        
+        <div class="graph-container">
+            <svg id="graph" width="800" height="500"></svg>
+        </div>
+        
+        <div class="description" id="description">
+            A*アルゴリズムを開始するには、「アニメーション実行」または「ステップ実行」ボタンをクリックしてください。
+        </div>
+        
+        <div class="progress">
+            <div class="progress-bar" id="progress-bar"></div>
+        </div>
+        
+        <div class="metrics">
+            <div class="metric">
+                <span>探索済みノード数: </span>
+                <span id="explored-count">0</span>
+            </div>
+            <div class="metric">
+                <span>パスの長さ: </span>
+                <span id="path-length">-</span>
             </div>
         </div>
     </div>
+    
     <script src="script.js"></script>
 </body>
 </html>
