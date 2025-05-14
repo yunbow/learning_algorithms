@@ -19,18 +19,6 @@ class GraphData {
         return new ArrayList<>(data.keySet());
     }
 
-    public List<String[]> getEdges() {
-        Set<String[]> edges = new HashSet<>();
-        for (String vertex : data.keySet()) {
-            for (AbstractMap.SimpleEntry<String, Integer> neighbor : data.get(vertex)) {
-                String[] edge = new String[]{vertex, neighbor.getKey()};
-                Arrays.sort(edge);
-                edges.add(new String[]{edge[0], edge[1], String.valueOf(neighbor.getValue())});
-            }
-        }
-        return new ArrayList<>(edges);
-    }
-
     public List<AbstractMap.SimpleEntry<String, Integer>> getNeighbors(String vertex) {
         return data.getOrDefault(vertex, null);
     }
@@ -218,7 +206,5 @@ public class BfsDemo {
         System.out.println("\nget_connected_components");
         List<List<String>> output = graphData.getConnectedComponents();
         System.out.println("  連結成分: " + output);
-
-        // 追加のテストケースは同様に実装可能
     }
 }

@@ -1,5 +1,6 @@
 # Python
 # グラフの最短経路: ワーシャルフロイド法 (Warshall Floyd)
+
 import heapq
 
 class GraphData:
@@ -36,15 +37,6 @@ class GraphData:
             return self._data[vertex]
         else:
             return None # 頂点が存在しない場合はNoneを返す
-
-    def get_edge_weight(self, vertex1, vertex2):
-        # 指定された2つの頂点間の辺の重みを返します。
-        # 辺が存在しない場合はNoneを返します。
-        if vertex1 in self._data and vertex2 in self._data:
-            for neighbor, weight in self._data[vertex1]:
-                if neighbor == vertex2:
-                    return weight
-        return None # 辺が存在しない場合
 
     def add_vertex(self, vertex):
         # 新しい頂点をグラフに追加します。
@@ -88,49 +80,6 @@ class GraphData:
             self._data[vertex2].append((vertex1, weight))
         
         return True
-
-    def remove_vertex(self, vertex):
-        # 頂点とそれに関連する辺を削除します。
-        if vertex in self._data:
-            # この頂点への参照を他の頂点の隣接リストから削除する
-            for v in self._data:
-                self._data[v] = [(neighbor, weight) for neighbor, weight in self._data[v] if neighbor != vertex]
-            # 頂点自体を削除する
-            del self._data[vertex]
-            return True
-        else:
-            print(f"ERROR: {vertex} は範囲外です")
-            return False
-
-    def remove_edge(self, vertex1, vertex2):
-        # 両頂点間の辺を削除します。
-        if vertex1 in self._data and vertex2 in self._data:
-            removed = False
-            # vertex1 から vertex2 への辺を削除
-            original_len_v1 = len(self._data[vertex1])
-            self._data[vertex1] = [(neighbor, weight) for neighbor, weight in self._data[vertex1] if neighbor != vertex2]
-            if len(self._data[vertex1]) < original_len_v1:
-                removed = True
-
-            # vertex2 から vertex1 への辺を削除
-            original_len_v2 = len(self._data[vertex2])
-            self._data[vertex2] = [(neighbor, weight) for neighbor, weight in self._data[vertex2] if neighbor != vertex1]
-            if len(self._data[vertex2]) < original_len_v2:
-                removed = True
-                
-            return removed # 少なくとも片方向が削除されたか
-
-        else:
-            print(f"ERROR: {vertex1} または {vertex2} は範囲外です")
-            return False
-
-    def is_empty(self):
-        # グラフが空かどうかを返します。
-        return len(self._data) == 0
-
-    def size(self):
-        # グラフの頂点数を返します。
-        return len(self._data)
 
     def clear(self):
         # グラフを空にします。

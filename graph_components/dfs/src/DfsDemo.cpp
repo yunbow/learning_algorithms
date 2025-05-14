@@ -39,59 +39,6 @@ public:
         return vertices;
     }
 
-    std::vector<std::tuple<std::string, std::string, int>> get_edges() const {
-        std::set<std::tuple<std::string, std::string, int>> edges;
-        for (const auto& vertex : _data) {
-            for (const auto& neighbor : vertex.second) {
-                auto edge = std::make_tuple(
-                    std::min(vertex.first, neighbor.first),
-                    std::max(vertex.first, neighbor.first),
-                    neighbor.second
-                );
-                edges.insert(edge);
-            }
-        }
-        return std::vector<std::tuple<std::string, std::string, int>>(edges.begin(), edges.end());
-    }
-
-    std::vector<std::pair<std::string, int>>* get_neighbors(const std::string& vertex) {
-        auto it = _data.find(vertex);
-        return (it != _data.end()) ? &(it->second) : nullptr;
-    }
-
-    int* get_edge_weight(const std::string& vertex1, const std::string& vertex2) {
-        auto it1 = _data.find(vertex1);
-        if (it1 != _data.end()) {
-            for (const auto& neighbor : it1->second) {
-                if (neighbor.first == vertex2) {
-                    return new int(neighbor.second);
-                }
-            }
-        }
-        return nullptr;
-    }
-
-    std::vector<std::pair<std::string, int>>* get_vertice(const std::string& vertex) {
-        auto it = _data.find(vertex);
-        if (it != _data.end()) {
-            return &(it->second);
-        }
-        std::cout << "ERROR: " << vertex << "は範囲外です" << std::endl;
-        return nullptr;
-    }
-
-    bool get_edge(const std::string& vertex1, const std::string& vertex2) {
-        auto it1 = _data.find(vertex1);
-        if (it1 != _data.end()) {
-            for (const auto& neighbor : it1->second) {
-                if (neighbor.first == vertex2) {
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
-
     bool add_vertex(const std::string& vertex) {
         if (_data.find(vertex) == _data.end()) {
             _data[vertex] = {};
@@ -131,64 +78,6 @@ public:
         }
 
         return true;
-    }
-
-    bool remove_vertex(const std::string& vertex) {
-        if (_data.find(vertex) != _data.end()) {
-            // 他の頂点の隣接リストから参照を削除
-            for (auto& v : _data) {
-                v.second.erase(
-                    std::remove_if(v.second.begin(), v.second.end(),
-                        [&vertex](const std::pair<std::string, int>& p) { return p.first == vertex; }),
-                    v.second.end()
-                );
-            }
-            // 頂点を削除
-            _data.erase(vertex);
-            return true;
-        }
-        std::cout << "ERROR: " << vertex << " は範囲外です" << std::endl;
-        return false;
-    }
-
-    bool remove_edge(const std::string& vertex1, const std::string& vertex2) {
-        if (_data.find(vertex1) != _data.end() && _data.find(vertex2) != _data.end()) {
-            bool removed = false;
-
-            // vertex1 から vertex2 への辺を削除
-            size_t orig_size_v1 = _data[vertex1].size();
-            _data[vertex1].erase(
-                std::remove_if(_data[vertex1].begin(), _data[vertex1].end(),
-                    [&vertex2](const std::pair<std::string, int>& p) { return p.first == vertex2; }),
-                _data[vertex1].end()
-            );
-            if (_data[vertex1].size() < orig_size_v1) {
-                removed = true;
-            }
-
-            // vertex2 から vertex1 への辺を削除
-            size_t orig_size_v2 = _data[vertex2].size();
-            _data[vertex2].erase(
-                std::remove_if(_data[vertex2].begin(), _data[vertex2].end(),
-                    [&vertex1](const std::pair<std::string, int>& p) { return p.first == vertex1; }),
-                _data[vertex2].end()
-            );
-            if (_data[vertex2].size() < orig_size_v2) {
-                removed = true;
-            }
-
-            return removed;
-        }
-        std::cout << "ERROR: " << vertex1 << " または " << vertex2 << " は範囲外です" << std::endl;
-        return false;
-    }
-
-    bool is_empty() const {
-        return _data.empty();
-    }
-
-    size_t size() const {
-        return _data.size();
     }
 
     bool clear() {

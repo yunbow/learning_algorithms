@@ -84,29 +84,6 @@ class GraphData {
     return Array.from(edges).map(JSON.parse);
   }
 
-  getNeighbors(vertex) {
-    // 指定された頂点の隣接ノードと辺の重みのリストを返します。
-    // 形式: [[隣接頂点, 重み], ...]
-    if (vertex in this._data) {
-      return this._data[vertex];
-    } else {
-      return null; // 頂点が存在しない場合はNullを返す
-    }
-  }
-
-  getEdgeWeight(vertex1, vertex2) {
-    // 指定された2つの頂点間の辺の重みを返します。
-    // 辺が存在しない場合はNullを返します。
-    if (vertex1 in this._data && vertex2 in this._data) {
-      for (const [neighbor, weight] of this._data[vertex1]) {
-        if (neighbor === vertex2) {
-          return weight;
-        }
-      }
-    }
-    return null; // 辺が存在しない場合
-  }
-
   addVertex(vertex) {
     // 新しい頂点をグラフに追加します。
     if (!(vertex in this._data)) {
@@ -159,57 +136,6 @@ class GraphData {
     }
     
     return true;
-  }
-
-  removeVertex(vertex) {
-    // 頂点とそれに関連する辺を削除します。
-    if (vertex in this._data) {
-      // この頂点への参照を他の頂点の隣接リストから削除する
-      for (const v in this._data) {
-        this._data[v] = this._data[v].filter(([neighbor, _]) => neighbor !== vertex);
-      }
-      // 頂点自体を削除する
-      delete this._data[vertex];
-      return true;
-    } else {
-      console.error(`ERROR: ${vertex} は範囲外です`);
-      return false;
-    }
-  }
-
-  removeEdge(vertex1, vertex2) {
-    // 両頂点間の辺を削除します。
-    if (vertex1 in this._data && vertex2 in this._data) {
-      let removed = false;
-      // vertex1 から vertex2 への辺を削除
-      const originalLenV1 = this._data[vertex1].length;
-      this._data[vertex1] = this._data[vertex1].filter(([neighbor, _]) => neighbor !== vertex2);
-      if (this._data[vertex1].length < originalLenV1) {
-        removed = true;
-      }
-
-      // vertex2 から vertex1 への辺を削除
-      const originalLenV2 = this._data[vertex2].length;
-      this._data[vertex2] = this._data[vertex2].filter(([neighbor, _]) => neighbor !== vertex1);
-      if (this._data[vertex2].length < originalLenV2) {
-        removed = true;
-      }
-      
-      return removed; // 少なくとも片方向が削除されたか
-    } else {
-      console.error(`ERROR: ${vertex1} または ${vertex2} は範囲外です`);
-      return false;
-    }
-  }
-
-  isEmpty() {
-    // グラフが空かどうかを返します。
-    return Object.keys(this._data).length === 0;
-  }
-
-  size() {
-    // グラフの頂点数を返します。
-    return Object.keys(this._data).length;
   }
 
   clear() {

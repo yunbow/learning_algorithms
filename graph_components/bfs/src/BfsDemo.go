@@ -35,58 +35,9 @@ func (g *GraphData) GetVertices() []string {
 	return vertices
 }
 
-func (g *GraphData) GetEdges() []struct {
-	vertex1 string
-	vertex2 string
-	weight  int
-} {
-	edges := make(map[string]struct{})
-	var result []struct {
-		vertex1 string
-		vertex2 string
-		weight  int
-	}
-
-	for vertex, neighbors := range g.data {
-		for _, neighbor := range neighbors {
-			var key string
-			if vertex < neighbor.vertex {
-				key = vertex + "," + neighbor.vertex
-			} else {
-				key = neighbor.vertex + "," + vertex
-			}
-
-			if _, exists := edges[key]; !exists {
-				edges[key] = struct{}{}
-				result = append(result, struct {
-					vertex1 string
-					vertex2 string
-					weight  int
-				}{
-					vertex1: vertex,
-					vertex2: neighbor.vertex,
-					weight:  neighbor.weight,
-				})
-			}
-		}
-	}
-	return result
-}
-
 func (g *GraphData) GetNeighbors(vertex string) []neighborEntry {
 	if neighbors, exists := g.data[vertex]; exists {
 		return neighbors
-	}
-	return nil
-}
-
-func (g *GraphData) GetEdgeWeight(vertex1, vertex2 string) *int {
-	if neighbors, exists := g.data[vertex1]; exists {
-		for _, neighbor := range neighbors {
-			if neighbor.vertex == vertex2 {
-				return &neighbor.weight
-			}
-		}
 	}
 	return nil
 }
@@ -97,17 +48,6 @@ func (g *GraphData) GetVertice(vertex string) []neighborEntry {
 	}
 	fmt.Printf("ERROR: %s is out of range\n", vertex)
 	return nil
-}
-
-func (g *GraphData) GetEdge(vertex1, vertex2 string) bool {
-	if neighbors, exists := g.data[vertex1]; exists {
-		for _, neighbor := range neighbors {
-			if neighbor.vertex == vertex2 {
-				return true
-			}
-		}
-	}
-	return false
 }
 
 func (g *GraphData) AddVertex(vertex string) bool {
@@ -148,71 +88,6 @@ func (g *GraphData) AddEdge(vertex1, vertex2 string, weight int) bool {
 	}
 
 	return true
-}
-
-func (g *GraphData) RemoveVertex(vertex string) bool {
-	if _, exists := g.data[vertex]; exists {
-		// Remove references to this vertex from other vertices
-		for v := range g.data {
-			var newNeighbors []neighborEntry
-			for _, neighbor := range g.data[v] {
-				if neighbor.vertex != vertex {
-					newNeighbors = append(newNeighbors, neighbor)
-				}
-			}
-			g.data[v] = newNeighbors
-		}
-
-		// Remove the vertex itself
-		delete(g.data, vertex)
-		return true
-	}
-	fmt.Printf("ERROR: %s is out of range\n", vertex)
-	return false
-}
-
-func (g *GraphData) RemoveEdge(vertex1, vertex2 string) bool {
-	if _, exists1 := g.data[vertex1]; exists1 {
-		if _, exists2 := g.data[vertex2]; exists2 {
-			removed := false
-
-			// Remove edge from vertex1 to vertex2
-			var newNeighborsV1 []neighborEntry
-			for _, neighbor := range g.data[vertex1] {
-				if neighbor.vertex != vertex2 {
-					newNeighborsV1 = append(newNeighborsV1, neighbor)
-				}
-			}
-			if len(newNeighborsV1) < len(g.data[vertex1]) {
-				removed = true
-			}
-			g.data[vertex1] = newNeighborsV1
-
-			// Remove edge from vertex2 to vertex1
-			var newNeighborsV2 []neighborEntry
-			for _, neighbor := range g.data[vertex2] {
-				if neighbor.vertex != vertex1 {
-					newNeighborsV2 = append(newNeighborsV2, neighbor)
-				}
-			}
-			if len(newNeighborsV2) < len(g.data[vertex2]) {
-				removed = true
-			}
-			g.data[vertex2] = newNeighborsV2
-
-			return removed
-		}
-	}
-	fmt.Printf("ERROR: %s or %s is out of range\n", vertex1, vertex2)
-	return false
-}
-
-func (g *GraphData) IsEmpty() bool {
-	return len(g.data) == 0
-}
-
-func (g *GraphData) Size() int {
-	return len(g.data)
 }
 
 func (g *GraphData) Clear() bool {

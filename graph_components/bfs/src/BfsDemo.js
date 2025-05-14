@@ -14,30 +14,8 @@ class GraphData {
         return Object.keys(this._data);
     }
 
-    getEdges() {
-        const edges = new Set();
-        for (const vertex in this._data) {
-            for (const [neighbor, weight] of this._data[vertex]) {
-                const sortedEdge = [vertex, neighbor].sort();
-                edges.add(`${sortedEdge[0]},${sortedEdge[1]},${weight}`);
-            }
-        }
-        return Array.from(edges).map(edge => edge.split(','));
-    }
-
     getNeighbors(vertex) {
         return this._data[vertex] || null;
-    }
-
-    getEdgeWeight(vertex1, vertex2) {
-        if (vertex1 in this._data && vertex2 in this._data) {
-            for (const [neighbor, weight] of this._data[vertex1]) {
-                if (neighbor === vertex2) {
-                    return weight;
-                }
-            }
-        }
-        return null;
     }
 
     getVertice(vertex) {
@@ -47,13 +25,6 @@ class GraphData {
             console.error(`ERROR: ${vertex}は範囲外です`);
             return null;
         }
-    }
-
-    getEdge(vertex1, vertex2) {
-        if (vertex1 in this._data && vertex2 in this._data) {
-            return this._data[vertex1].some(([neighbor]) => neighbor === vertex2);
-        }
-        return false;
     }
 
     addVertex(vertex) {
@@ -84,51 +55,6 @@ class GraphData {
         addOrUpdateEdge(vertex2, vertex1);
 
         return true;
-    }
-
-    removeVertex(vertex) {
-        if (vertex in this._data) {
-            for (const v in this._data) {
-                this._data[v] = this._data[v].filter(([neighbor]) => neighbor !== vertex);
-            }
-            delete this._data[vertex];
-            return true;
-        } else {
-            console.error(`ERROR: ${vertex} は範囲外です`);
-            return false;
-        }
-    }
-
-    removeEdge(vertex1, vertex2) {
-        if (vertex1 in this._data && vertex2 in this._data) {
-            let removed = false;
-
-            const removeEdgeInDirection = (v1, v2) => {
-                const originalLen = this._data[v1].length;
-                this._data[v1] = this._data[v1].filter(([neighbor]) => neighbor !== v2);
-                return this._data[v1].length < originalLen;
-            };
-
-            if (removeEdgeInDirection(vertex1, vertex2)) {
-                removed = true;
-            }
-            if (removeEdgeInDirection(vertex2, vertex1)) {
-                removed = true;
-            }
-
-            return removed;
-        } else {
-            console.error(`ERROR: ${vertex1} または ${vertex2} は範囲外です`);
-            return false;
-        }
-    }
-
-    isEmpty() {
-        return Object.keys(this._data).length === 0;
-    }
-
-    size() {
-        return Object.keys(this._data).length;
     }
 
     clear() {

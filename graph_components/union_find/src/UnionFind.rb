@@ -34,48 +34,6 @@ class GraphData
     edges.to_a
   end
   
-  def get_neighbors(vertex)
-    # 指定された頂点の隣接ノードと辺の重みのリストを返します。
-    # 形式: [[隣接頂点, 重み], ...]
-    @data[vertex] if @data.key?(vertex)
-  end
-
-  def get_edge_weight(vertex1, vertex2)
-    # 指定された2つの頂点間の辺の重みを返します。
-    # 辺が存在しない場合はnilを返します。
-    if @data.key?(vertex1) && @data.key?(vertex2)
-      @data[vertex1].each do |neighbor, weight|
-        return weight if neighbor == vertex2
-      end
-    end
-    nil # 辺が存在しない場合
-  end
-
-  def get_vertice(vertex)
-    # 頂点がグラフに存在するか確認する
-    if @data.key?(vertex)
-      # 存在する場合は、その頂点の隣接リスト（関連する値）を返す
-      @data[vertex]
-    else
-      # 存在しない場合はメッセージを表示し、nilを返す
-      puts "ERROR: #{vertex}は範囲外です"
-      nil
-    end
-  end
-
-  def get_edge(vertex1, vertex2)
-    # 指定された2つの頂点間に辺が存在するかを確認する
-    # 両方の頂点がグラフに存在する必要がある
-    if @data.key?(vertex1) && @data.key?(vertex2)
-      # vertex1の隣接リストにvertex2が含まれているかを確認
-      # 無向グラフなので、片方を確認すれば十分
-      @data[vertex1].any? { |neighbor, _| neighbor == vertex2 }
-    else
-      # どちらかの頂点が存在しない場合は辺も存在しない
-      false
-    end
-  end
-
   def add_vertex(vertex)
     # 新しい頂点をグラフに追加します。
     unless @data.key?(vertex)
@@ -117,53 +75,11 @@ class GraphData
     true
   end
   
-  def remove_vertex(vertex)
-    # 頂点とそれに関連する辺を削除します。
-    if @data.key?(vertex)
-      # この頂点への参照を他の頂点の隣接リストから削除する
-      @data.each do |v, neighbors|
-        @data[v] = neighbors.reject { |neighbor, _| neighbor == vertex }
-      end
-      # 頂点自体を削除する
-      @data.delete(vertex)
-      true
-    else
-      puts "ERROR: #{vertex} は範囲外です"
-      false
-    end
-  end
-
-  def remove_edge(vertex1, vertex2)
-    # 両頂点間の辺を削除します。
-    if @data.key?(vertex1) && @data.key?(vertex2)
-      removed = false
-      # vertex1 から vertex2 への辺を削除
-      original_len_v1 = @data[vertex1].length
-      @data[vertex1] = @data[vertex1].reject { |neighbor, _| neighbor == vertex2 }
-      removed = true if @data[vertex1].length < original_len_v1
-
-      # vertex2 から vertex1 への辺を削除
-      original_len_v2 = @data[vertex2].length
-      @data[vertex2] = @data[vertex2].reject { |neighbor, _| neighbor == vertex1 }
-      removed = true if @data[vertex2].length < original_len_v2
-      
-      removed # 少なくとも片方向が削除されたか
-    else
-      puts "ERROR: #{vertex1} または #{vertex2} は範囲外です"
-      false
-    end
-  end
-
   def is_empty?
     # グラフが空かどうか
     @data.empty?
   end
-  
-  def size
-    # グラフの頂点数を返す
-    @data.size
-  end
-  
+    
   def clear
     # グラフを空にする
     @data = {}

@@ -89,49 +89,10 @@ class GraphData:
         
         return True
     
-    def remove_vertex(self, vertex):
-        # 頂点とそれに関連する辺を削除します。
-        if vertex in self._data:
-            # この頂点への参照を他の頂点の隣接リストから削除する
-            for v in self._data:
-                self._data[v] = [(neighbor, weight) for neighbor, weight in self._data[v] if neighbor != vertex]
-            # 頂点自体を削除する
-            del self._data[vertex]
-            return True
-        else:
-            print(f"ERROR: {vertex} は範囲外です")
-            return False
-
-    def remove_edge(self, vertex1, vertex2):
-        # 両頂点間の辺を削除します。
-        if vertex1 in self._data and vertex2 in self._data:
-            removed = False
-            # vertex1 から vertex2 への辺を削除
-            original_len_v1 = len(self._data[vertex1])
-            self._data[vertex1] = [(neighbor, weight) for neighbor, weight in self._data[vertex1] if neighbor != vertex2]
-            if len(self._data[vertex1]) < original_len_v1:
-                removed = True
-
-            # vertex2 から vertex1 への辺を削除
-            original_len_v2 = len(self._data[vertex2])
-            self._data[vertex2] = [(neighbor, weight) for neighbor, weight in self._data[vertex2] if neighbor != vertex1]
-            if len(self._data[vertex2]) < original_len_v2:
-                removed = True
-                
-            return removed # 少なくとも片方向が削除されたか
-
-        else:
-            print(f"ERROR: {vertex1} または {vertex2} は範囲外です")
-            return False
-
     def is_empty(self):
         # グラフが空かどうかを返します。
         return len(self._data) == 0
-    
-    def size(self):
-        # グラフの頂点数を返します。
-        return len(self._data)
-    
+        
     def clear(self):
         # グラフを空にします。
         self._data = {}

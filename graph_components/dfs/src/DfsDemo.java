@@ -18,52 +18,6 @@ class GraphData {
         return new ArrayList<>(data.keySet());
     }
 
-    public List<Edge> getEdges() {
-        Set<Edge> edges = new HashSet<>();
-        for (String vertex : data.keySet()) {
-            for (Pair<String, Integer> neighbor : data.get(vertex)) {
-                String[] sorted = new String[]{vertex, neighbor.first};
-                Arrays.sort(sorted);
-                edges.add(new Edge(sorted[0], sorted[1], neighbor.second));
-            }
-        }
-        return new ArrayList<>(edges);
-    }
-
-    public List<Pair<String, Integer>> getNeighbors(String vertex) {
-        return data.getOrDefault(vertex, null);
-    }
-
-    public Integer getEdgeWeight(String vertex1, String vertex2) {
-        if (data.containsKey(vertex1)) {
-            for (Pair<String, Integer> neighbor : data.get(vertex1)) {
-                if (neighbor.first.equals(vertex2)) {
-                    return neighbor.second;
-                }
-            }
-        }
-        return null;
-    }
-
-    public List<Pair<String, Integer>> getVertice(String vertex) {
-        if (data.containsKey(vertex)) {
-            return data.get(vertex);
-        }
-        System.out.println("ERROR: " + vertex + "は範囲外です");
-        return null;
-    }
-
-    public boolean getEdge(String vertex1, String vertex2) {
-        if (data.containsKey(vertex1) && data.containsKey(vertex2)) {
-            for (Pair<String, Integer> neighbor : data.get(vertex1)) {
-                if (neighbor.first.equals(vertex2)) {
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
-
     public boolean addVertex(String vertex) {
         if (!data.containsKey(vertex)) {
             data.put(vertex, new ArrayList<>());
@@ -103,47 +57,6 @@ class GraphData {
         }
 
         return true;
-    }
-
-    public boolean removeVertex(String vertex) {
-        if (data.containsKey(vertex)) {
-            for (String v : data.keySet()) {
-                data.get(v).removeIf(neighbor -> neighbor.first.equals(vertex));
-            }
-            data.remove(vertex);
-            return true;
-        }
-        System.out.println("ERROR: " + vertex + "は範囲外です");
-        return false;
-    }
-
-    public boolean removeEdge(String vertex1, String vertex2) {
-        if (data.containsKey(vertex1) && data.containsKey(vertex2)) {
-            boolean removed = false;
-            int originalSizeV1 = data.get(vertex1).size();
-            data.get(vertex1).removeIf(neighbor -> neighbor.first.equals(vertex2));
-            if (data.get(vertex1).size() < originalSizeV1) {
-                removed = true;
-            }
-
-            int originalSizeV2 = data.get(vertex2).size();
-            data.get(vertex2).removeIf(neighbor -> neighbor.first.equals(vertex1));
-            if (data.get(vertex2).size() < originalSizeV2) {
-                removed = true;
-            }
-
-            return removed;
-        }
-        System.out.println("ERROR: " + vertex1 + " または " + vertex2 + " は範囲外です");
-        return false;
-    }
-
-    public boolean isEmpty() {
-        return data.isEmpty();
-    }
-
-    public int size() {
-        return data.size();
     }
 
     public boolean clear() {

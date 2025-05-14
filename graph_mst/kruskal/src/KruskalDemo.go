@@ -130,29 +130,6 @@ func (g *GraphData) GetEdges() []Edge {
 	return result
 }
 
-// GetNeighbors は指定された頂点の隣接ノードを返します
-func (g *GraphData) GetNeighbors(vertex string) []struct {
-	Neighbor string
-	Weight   int
-} {
-	if neighbors, exists := g.data[vertex]; exists {
-		return neighbors
-	}
-	return nil
-}
-
-// GetEdgeWeight は頂点間の辺の重みを返します
-func (g *GraphData) GetEdgeWeight(vertex1, vertex2 string) (int, bool) {
-	if neighbors, exists := g.data[vertex1]; exists {
-		for _, neighborInfo := range neighbors {
-			if neighborInfo.Neighbor == vertex2 {
-				return neighborInfo.Weight, true
-			}
-		}
-	}
-	return 0, false
-}
-
 // AddVertex は新しい頂点をグラフに追加します
 func (g *GraphData) AddVertex(vertex string) bool {
 	if _, exists := g.data[vertex]; !exists {
@@ -203,81 +180,6 @@ func (g *GraphData) AddEdge(vertex1, vertex2 string, weight int) bool {
 	}
 
 	return true
-}
-
-// RemoveVertex は頂点とその関連辺を削除します
-func (g *GraphData) RemoveVertex(vertex string) bool {
-	if _, exists := g.data[vertex]; exists {
-		// この頂点への参照を他の頂点の隣接リストから削除
-		for v := range g.data {
-			newNeighbors := make([]struct {
-				Neighbor string
-				Weight   int
-			}, 0)
-			for _, neighborInfo := range g.data[v] {
-				if neighborInfo.Neighbor != vertex {
-					newNeighbors = append(newNeighbors, neighborInfo)
-				}
-			}
-			g.data[v] = newNeighbors
-		}
-		// 頂点自体を削除
-		delete(g.data, vertex)
-		return true
-	}
-	fmt.Printf("ERROR: %s は範囲外です\n", vertex)
-	return false
-}
-
-// RemoveEdge は両頂点間の辺を削除します
-func (g *GraphData) RemoveEdge(vertex1, vertex2 string) bool {
-	removed := false
-
-	if _, exists := g.data[vertex1]; exists {
-		originalLenV1 := len(g.data[vertex1])
-		newNeighbors := make([]struct {
-			Neighbor string
-			Weight   int
-		}, 0)
-		for _, neighborInfo := range g.data[vertex1] {
-			if neighborInfo.Neighbor != vertex2 {
-				newNeighbors = append(newNeighbors, neighborInfo)
-			}
-		}
-		g.data[vertex1] = newNeighbors
-		if len(g.data[vertex1]) < originalLenV1 {
-			removed = true
-		}
-	}
-
-	if _, exists := g.data[vertex2]; exists {
-		originalLenV2 := len(g.data[vertex2])
-		newNeighbors := make([]struct {
-			Neighbor string
-			Weight   int
-		}, 0)
-		for _, neighborInfo := range g.data[vertex2] {
-			if neighborInfo.Neighbor != vertex1 {
-				newNeighbors = append(newNeighbors, neighborInfo)
-			}
-		}
-		g.data[vertex2] = newNeighbors
-		if len(g.data[vertex2]) < originalLenV2 {
-			removed = true
-		}
-	}
-
-	return removed
-}
-
-// IsEmpty はグラフが空かどうかを返します
-func (g *GraphData) IsEmpty() bool {
-	return len(g.data) == 0
-}
-
-// Size はグラフの頂点数を返します
-func (g *GraphData) Size() int {
-	return len(g.data)
 }
 
 // Clear はグラフを空にします

@@ -17,66 +17,7 @@ class GraphData {
         // グラフの全頂点をリストとして返します。
         return Array(_data.keys)
     }
-    
-    func getEdges() -> [(String, String, Int)] {
-        // グラフの全辺をリストとして返します。
-        // 無向グラフの場合、(u, v, weight) の形式で返します。
-        // 重複を避けるためにセットを使用します。
-        var edges = Set<String>()
-        var result: [(String, String, Int)] = []
         
-        for vertex in _data.keys {
-            for (neighbor, weight) in _data[vertex]! {
-                // 辺を正規化してセットに追加 (小さい方の頂点を最初にするなど)
-                let edge = [vertex, neighbor].sorted().joined(separator: "-")
-                if !edges.contains(edge) {
-                    edges.insert(edge)
-                    let sortedPair = [vertex, neighbor].sorted()
-                    result.append((sortedPair[0], sortedPair[1], weight))
-                }
-            }
-        }
-        return result
-    }
-    
-    func getNeighbors(vertex: String) -> [(String, Int)]? {
-        // 指定された頂点の隣接ノードと辺の重みのリストを返します。
-        // 形式: [(隣接頂点, 重み), ...]
-        return _data[vertex]
-    }
-    
-    func getEdgeWeight(vertex1: String, vertex2: String) -> Int? {
-        // 指定された2つの頂点間の辺の重みを返します。
-        // 辺が存在しない場合はnilを返します。
-        if let neighbors = _data[vertex1] {
-            for (neighbor, weight) in neighbors {
-                if neighbor == vertex2 {
-                    return weight
-                }
-            }
-        }
-        return nil
-    }
-    
-    func getVertice(vertex: String) -> [(String, Int)]? {
-        // 頂点がグラフに存在するか確認する
-        if let neighbors = _data[vertex] {
-            return neighbors
-        } else {
-            print("ERROR: \(vertex)は範囲外です")
-            return nil
-        }
-    }
-    
-    func getEdge(vertex1: String, vertex2: String) -> Bool {
-        // 指定された2つの頂点間に辺が存在するかを確認する
-        // 両方の頂点がグラフに存在する必要がある
-        if let neighbors1 = _data[vertex1], _data[vertex2] != nil {
-            return neighbors1.contains(where: { $0.0 == vertex2 })
-        }
-        return false
-    }
-    
     func addVertex(vertex: String) -> Bool {
         // 新しい頂点をグラフに追加します。
         if _data[vertex] == nil {
@@ -129,59 +70,7 @@ class GraphData {
         
         return true
     }
-    
-    func removeVertex(vertex: String) -> Bool {
-        // 頂点とそれに関連する辺を削除します。
-        if _data[vertex] != nil {
-            // この頂点への参照を他の頂点の隣接リストから削除する
-            for v in _data.keys {
-                _data[v] = _data[v]?.filter { $0.0 != vertex }
-            }
-            // 頂点自体を削除する
-            _data.removeValue(forKey: vertex)
-            return true
-        } else {
-            print("ERROR: \(vertex) は範囲外です")
-            return false
-        }
-    }
-    
-    func removeEdge(vertex1: String, vertex2: String) -> Bool {
-        // 両頂点間の辺を削除します。
-        if _data[vertex1] != nil && _data[vertex2] != nil {
-            var removed = false
-            
-            // vertex1 から vertex2 への辺を削除
-            let originalLenV1 = _data[vertex1]?.count ?? 0
-            _data[vertex1] = _data[vertex1]?.filter { $0.0 != vertex2 }
-            if let newLenV1 = _data[vertex1]?.count, newLenV1 < originalLenV1 {
-                removed = true
-            }
-            
-            // vertex2 から vertex1 への辺を削除
-            let originalLenV2 = _data[vertex2]?.count ?? 0
-            _data[vertex2] = _data[vertex2]?.filter { $0.0 != vertex1 }
-            if let newLenV2 = _data[vertex2]?.count, newLenV2 < originalLenV2 {
-                removed = true
-            }
-            
-            return removed
-        } else {
-            print("ERROR: \(vertex1) または \(vertex2) は範囲外です")
-            return false
-        }
-    }
-    
-    func isEmpty() -> Bool {
-        // グラフが空かどうか
-        return _data.isEmpty
-    }
-    
-    func size() -> Int {
-        // グラフの頂点数を返す
-        return _data.count
-    }
-    
+       
     func clear() -> Bool {
         // グラフを空にする
         _data = [:]

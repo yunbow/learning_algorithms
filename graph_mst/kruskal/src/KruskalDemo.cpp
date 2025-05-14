@@ -104,30 +104,6 @@ public:
         return std::vector<std::tuple<std::string, std::string, int>>(edges.begin(), edges.end());
     }
 
-    std::vector<std::pair<std::string, int>> get_neighbors(const std::string& vertex) {
-        // 指定された頂点の隣接ノードと辺の重みのリストを返します。
-        // 形式: [(隣接頂点, 重み), ...]
-        if (_data.find(vertex) != _data.end()) {
-            return _data[vertex];
-        }
-        else {
-            return {}; // 頂点が存在しない場合は空のリストを返す
-        }
-    }
-
-    int get_edge_weight(const std::string& vertex1, const std::string& vertex2) {
-        // 指定された2つの頂点間の辺の重みを返します。
-        // 辺が存在しない場合は-1を返します。
-        if (_data.find(vertex1) != _data.end() && _data.find(vertex2) != _data.end()) {
-            for (const auto& pair : _data[vertex1]) {
-                if (pair.first == vertex2) {
-                    return pair.second;
-                }
-            }
-        }
-        return -1; // 辺が存在しない場合
-    }
-
     bool add_vertex(const std::string& vertex) {
         // 新しい頂点をグラフに追加します。
         if (_data.find(vertex) == _data.end()) {
@@ -177,71 +153,6 @@ public:
         }
         
         return true;
-    }
-
-    bool remove_vertex(const std::string& vertex) {
-        // 頂点とそれに関連する辺を削除します。
-        if (_data.find(vertex) != _data.end()) {
-            // この頂点への参照を他の頂点の隣接リストから削除する
-            for (auto& entry : _data) {
-                auto& neighbors = entry.second;
-                for (auto it = neighbors.begin(); it != neighbors.end();) {
-                    if (it->first == vertex) {
-                        it = neighbors.erase(it);
-                    }
-                    else {
-                        ++it;
-                    }
-                }
-            }
-            // 頂点自体を削除する
-            _data.erase(vertex);
-            return true;
-        }
-        else {
-            std::cerr << "ERROR: " << vertex << " は範囲外です" << std::endl;
-            return false;
-        }
-    }
-
-    bool remove_edge(const std::string& vertex1, const std::string& vertex2) {
-        // 両頂点間の辺を削除します。
-        if (_data.find(vertex1) != _data.end() && _data.find(vertex2) != _data.end()) {
-            bool removed = false;
-            // vertex1 から vertex2 への辺を削除
-            size_t original_len_v1 = _data[vertex1].size();
-            auto new_end_v1 = std::remove_if(_data[vertex1].begin(), _data[vertex1].end(),
-                [&vertex2](const std::pair<std::string, int>& pair) { return pair.first == vertex2; });
-            _data[vertex1].erase(new_end_v1, _data[vertex1].end());
-            if (_data[vertex1].size() < original_len_v1) {
-                removed = true;
-            }
-
-            // vertex2 から vertex1 への辺を削除
-            size_t original_len_v2 = _data[vertex2].size();
-            auto new_end_v2 = std::remove_if(_data[vertex2].begin(), _data[vertex2].end(),
-                [&vertex1](const std::pair<std::string, int>& pair) { return pair.first == vertex1; });
-            _data[vertex2].erase(new_end_v2, _data[vertex2].end());
-            if (_data[vertex2].size() < original_len_v2) {
-                removed = true;
-            }
-                
-            return removed; // 少なくとも片方向が削除されたか
-        }
-        else {
-            std::cerr << "ERROR: " << vertex1 << " または " << vertex2 << " は範囲外です" << std::endl;
-            return false;
-        }
-    }
-
-    bool is_empty() {
-        // グラフが空かどうかを返します。
-        return _data.empty();
-    }
-
-    size_t size() {
-        // グラフの頂点数を返します。
-        return _data.size();
     }
 
     bool clear() {

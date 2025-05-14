@@ -121,36 +121,7 @@ class GraphData {
         
         return new ArrayList<>(edges);
     }
-    
-    /**
-     * 指定された頂点の隣接ノードと辺の重みのリストを取得
-     * @param vertex 頂点
-     * @return 隣接頂点と重みのペアのリスト
-     */
-    public List<Pair<String, Integer>> getNeighbors(String vertex) {
-        if (data.containsKey(vertex)) {
-            return data.get(vertex);
-        }
-        return null; // 頂点が存在しない場合
-    }
-    
-    /**
-     * 2つの頂点間の辺の重みを取得
-     * @param vertex1 頂点1
-     * @param vertex2 頂点2
-     * @return 辺の重み（辺が存在しない場合はnull）
-     */
-    public Integer getEdgeWeight(String vertex1, String vertex2) {
-        if (data.containsKey(vertex1) && data.containsKey(vertex2)) {
-            for (Pair<String, Integer> neighbor : data.get(vertex1)) {
-                if (neighbor.first.equals(vertex2)) {
-                    return neighbor.second;
-                }
-            }
-        }
-        return null; // 辺が存在しない場合
-    }
-    
+        
     /**
      * 新しい頂点をグラフに追加
      * @param vertex 追加する頂点
@@ -211,92 +182,7 @@ class GraphData {
         
         return true;
     }
-    
-    /**
-     * 頂点とそれに関連する辺を削除
-     * @param vertex 削除する頂点
-     * @return 成功した場合はtrue
-     */
-    public boolean removeVertex(String vertex) {
-        if (data.containsKey(vertex)) {
-            // この頂点への参照を他の頂点の隣接リストから削除
-            for (String v : data.keySet()) {
-                List<Pair<String, Integer>> newNeighbors = new ArrayList<>();
-                for (Pair<String, Integer> neighbor : data.get(v)) {
-                    if (!neighbor.first.equals(vertex)) {
-                        newNeighbors.add(neighbor);
-                    }
-                }
-                data.put(v, newNeighbors);
-            }
-            // 頂点自体を削除
-            data.remove(vertex);
-            return true;
-        } else {
-            System.out.println("ERROR: " + vertex + " は範囲外です");
-            return false;
-        }
-    }
-    
-    /**
-     * 両頂点間の辺を削除
-     * @param vertex1 頂点1
-     * @param vertex2 頂点2
-     * @return 成功した場合はtrue
-     */
-    public boolean removeEdge(String vertex1, String vertex2) {
-        if (data.containsKey(vertex1) && data.containsKey(vertex2)) {
-            boolean removed = false;
-            
-            // vertex1 から vertex2 への辺を削除
-            int originalLenV1 = data.get(vertex1).size();
-            List<Pair<String, Integer>> newNeighborsV1 = new ArrayList<>();
-            for (Pair<String, Integer> neighbor : data.get(vertex1)) {
-                if (!neighbor.first.equals(vertex2)) {
-                    newNeighborsV1.add(neighbor);
-                }
-            }
-            data.put(vertex1, newNeighborsV1);
-            if (data.get(vertex1).size() < originalLenV1) {
-                removed = true;
-            }
-            
-            // vertex2 から vertex1 への辺を削除
-            int originalLenV2 = data.get(vertex2).size();
-            List<Pair<String, Integer>> newNeighborsV2 = new ArrayList<>();
-            for (Pair<String, Integer> neighbor : data.get(vertex2)) {
-                if (!neighbor.first.equals(vertex1)) {
-                    newNeighborsV2.add(neighbor);
-                }
-            }
-            data.put(vertex2, newNeighborsV2);
-            if (data.get(vertex2).size() < originalLenV2) {
-                removed = true;
-            }
-            
-            return removed; // 少なくとも片方向が削除された場合
-        } else {
-            System.out.println("ERROR: " + vertex1 + " または " + vertex2 + " は範囲外です");
-            return false;
-        }
-    }
-    
-    /**
-     * グラフが空かどうかを判定
-     * @return 空の場合はtrue
-     */
-    public boolean isEmpty() {
-        return data.isEmpty();
-    }
-    
-    /**
-     * グラフの頂点数を取得
-     * @return 頂点数
-     */
-    public int size() {
-        return data.size();
-    }
-    
+        
     /**
      * グラフを空にする
      * @return 成功した場合はtrue

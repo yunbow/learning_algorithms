@@ -1,5 +1,6 @@
 # Python
 # 素数判定: ミラーラビン (Miller-Rabin)
+
 import random
 
 def is_prime(target, k=40):

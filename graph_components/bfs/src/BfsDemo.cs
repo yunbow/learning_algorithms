@@ -13,36 +13,9 @@ public class GraphData
 
     public List<string> GetVertices() => _data.Keys.ToList();
 
-    public List<(string, string, int)> GetEdges()
-    {
-        var edges = new HashSet<(string, string, int)>();
-        foreach (var vertex in _data)
-        {
-            foreach (var (neighbor, weight) in vertex.Value)
-            {
-                var edge = new[] { vertex.Key, neighbor }.OrderBy(v => v).ToArray();
-                edges.Add((edge[0], edge[1], weight));
-            }
-        }
-        return edges.ToList();
-    }
-
     public List<(string, int)> GetNeighbors(string vertex)
     {
         return _data.ContainsKey(vertex) ? _data[vertex] : null;
-    }
-
-    public int? GetEdgeWeight(string vertex1, string vertex2)
-    {
-        if (_data.ContainsKey(vertex1))
-        {
-            foreach (var (neighbor, weight) in _data[vertex1])
-            {
-                if (neighbor == vertex2)
-                    return weight;
-            }
-        }
-        return null;
     }
 
     public List<(string, int)> GetVertice(string vertex)
@@ -52,13 +25,6 @@ public class GraphData
         
         Console.WriteLine($"ERROR: {vertex}は範囲外です");
         return null;
-    }
-
-    public bool GetEdge(string vertex1, string vertex2)
-    {
-        return _data.ContainsKey(vertex1) && 
-               _data.ContainsKey(vertex2) && 
-               _data[vertex1].Any(n => n.Neighbor == vertex2);
     }
 
     public bool AddVertex(string vertex)
@@ -103,48 +69,6 @@ public class GraphData
 
         return true;
     }
-
-    public bool RemoveVertex(string vertex)
-    {
-        if (_data.ContainsKey(vertex))
-        {
-            foreach (var v in _data.Keys.ToList())
-            {
-                _data[v] = _data[v].Where(n => n.Neighbor != vertex).ToList();
-            }
-            _data.Remove(vertex);
-            return true;
-        }
-        
-        Console.WriteLine($"ERROR: {vertex} は範囲外です");
-        return false;
-    }
-
-    public bool RemoveEdge(string vertex1, string vertex2)
-    {
-        if (_data.ContainsKey(vertex1) && _data.ContainsKey(vertex2))
-        {
-            bool removed = false;
-            var originalLenV1 = _data[vertex1].Count;
-            _data[vertex1] = _data[vertex1].Where(n => n.Neighbor != vertex2).ToList();
-            if (_data[vertex1].Count < originalLenV1)
-                removed = true;
-
-            var originalLenV2 = _data[vertex2].Count;
-            _data[vertex2] = _data[vertex2].Where(n => n.Neighbor != vertex1).ToList();
-            if (_data[vertex2].Count < originalLenV2)
-                removed = true;
-
-            return removed;
-        }
-
-        Console.WriteLine($"ERROR: {vertex1} または {vertex2} は範囲外です");
-        return false;
-    }
-
-    public bool IsEmpty() => _data.Count == 0;
-
-    public int Size() => _data.Count;
 
     public bool Clear()
     {

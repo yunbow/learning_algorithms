@@ -30,23 +30,6 @@ class GraphData:
                 edges.append((u, v, weight))
         return edges
 
-    def get_neighbors(self, vertex):
-        # 指定された頂点の隣接ノードと辺の重みのリストを返します。
-        # 形式: [(隣接頂点, 重み), ...]
-        if vertex in self._data:
-            return self._data[vertex]
-        else:
-            return None # 頂点が存在しない場合はNoneを返す
-
-    def get_edge_weight(self, vertex1, vertex2):
-        # 指定された2つの頂点間の辺の重みを返します。
-        # 辺が存在しない場合はNoneを返します。
-        if vertex1 in self._data:
-            for neighbor, weight in self._data[vertex1]:
-                if neighbor == vertex2:
-                    return weight
-        return None # 辺が存在しない場合
-
     def add_vertex(self, vertex):
         # 新しい頂点をグラフに追加します。
         if vertex not in self._data:

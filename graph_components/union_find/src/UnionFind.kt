@@ -26,37 +26,6 @@ class GraphData {
         return edges.toList()
     }
 
-    fun getNeighbors(vertex: String): List<Pair<String, Int>>? {
-        return _data[vertex]
-    }
-
-    fun getEdgeWeight(vertex1: String, vertex2: String): Int? {
-        if (vertex1 in _data && vertex2 in _data) {
-            for ((neighbor, weight) in _data[vertex1]!!) {
-                if (neighbor == vertex2) {
-                    return weight
-                }
-            }
-        }
-        return null
-    }
-
-    fun getVertice(vertex: String): List<Pair<String, Int>>? {
-        return if (vertex in _data) {
-            _data[vertex]
-        } else {
-            println("ERROR: ${vertex}は範囲外です")
-            null
-        }
-    }
-
-    fun getEdge(vertex1: String, vertex2: String): Boolean {
-        if (vertex1 in _data && vertex2 in _data) {
-            return _data[vertex1]!!.any { it.first == vertex2 }
-        }
-        return false
-    }
-
     fun addVertex(vertex: String): Boolean {
         if (vertex !in _data) {
             _data[vertex] = mutableListOf()
@@ -91,51 +60,8 @@ class GraphData {
         return true
     }
 
-    fun removeVertex(vertex: String): Boolean {
-        if (vertex in _data) {
-            // この頂点への参照を他の頂点の隣接リストから削除する
-            for (v in _data.keys) {
-                _data[v] = _data[v]!!.filter { it.first != vertex }.toMutableList()
-            }
-            // 頂点自体を削除する
-            _data.remove(vertex)
-            return true
-        } else {
-            println("ERROR: ${vertex}は範囲外です")
-            return false
-        }
-    }
-
-    fun removeEdge(vertex1: String, vertex2: String): Boolean {
-        if (vertex1 in _data && vertex2 in _data) {
-            var removed = false
-            // vertex1 から vertex2 への辺を削除
-            val originalLenV1 = _data[vertex1]!!.size
-            _data[vertex1] = _data[vertex1]!!.filter { it.first != vertex2 }.toMutableList()
-            if (_data[vertex1]!!.size < originalLenV1) {
-                removed = true
-            }
-
-            // vertex2 から vertex1 への辺を削除
-            val originalLenV2 = _data[vertex2]!!.size
-            _data[vertex2] = _data[vertex2]!!.filter { it.first != vertex1 }.toMutableList()
-            if (_data[vertex2]!!.size < originalLenV2) {
-                removed = true
-            }
-
-            return removed
-        } else {
-            println("ERROR: ${vertex1}または${vertex2}は範囲外です")
-            return false
-        }
-    }
-
     fun isEmpty(): Boolean {
         return _data.isEmpty()
-    }
-
-    fun size(): Int {
-        return _data.size
     }
 
     fun clear(): Boolean {

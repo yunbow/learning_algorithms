@@ -78,29 +78,6 @@ class GraphData
     return edges.to_a
   end
 
-  def get_neighbors(vertex)
-    # 指定された頂点の隣接ノードと辺の重みの配列を返します。
-    # 形式: [[隣接頂点, 重み], ...]
-    if @data.key?(vertex)
-      return @data[vertex]
-    else
-      return nil # 頂点が存在しない場合はnilを返す
-    end
-  end
-
-  def get_edge_weight(vertex1, vertex2)
-    # 指定された2つの頂点間の辺の重みを返します。
-    # 辺が存在しない場合はnilを返します。
-    if @data.key?(vertex1) && @data.key?(vertex2)
-      @data[vertex1].each do |neighbor, weight|
-        if neighbor == vertex2
-          return weight
-        end
-      end
-    end
-    return nil # 辺が存在しない場合
-  end
-
   def add_vertex(vertex)
     # 新しい頂点をグラフに追加します。
     if !@data.key?(vertex)
@@ -153,57 +130,6 @@ class GraphData
     end
     
     return true
-  end
-
-  def remove_vertex(vertex)
-    # 頂点とそれに関連する辺を削除します。
-    if @data.key?(vertex)
-      # この頂点への参照を他の頂点の隣接リストから削除する
-      @data.each do |v, neighbors|
-        @data[v] = neighbors.reject { |neighbor, _| neighbor == vertex }
-      end
-      # 頂点自体を削除する
-      @data.delete(vertex)
-      return true
-    else
-      puts "ERROR: #{vertex} は範囲外です"
-      return false
-    end
-  end
-
-  def remove_edge(vertex1, vertex2)
-    # 両頂点間の辺を削除します。
-    if @data.key?(vertex1) && @data.key?(vertex2)
-      removed = false
-      # vertex1 から vertex2 への辺を削除
-      original_len_v1 = @data[vertex1].length
-      @data[vertex1] = @data[vertex1].reject { |neighbor, _| neighbor == vertex2 }
-      if @data[vertex1].length < original_len_v1
-        removed = true
-      end
-
-      # vertex2 から vertex1 への辺を削除
-      original_len_v2 = @data[vertex2].length
-      @data[vertex2] = @data[vertex2].reject { |neighbor, _| neighbor == vertex1 }
-      if @data[vertex2].length < original_len_v2
-        removed = true
-      end
-        
-      return removed # 少なくとも片方向が削除されたか
-    else
-      puts "ERROR: #{vertex1} または #{vertex2} は範囲外です"
-      return false
-    end
-  end
-
-  def is_empty?
-    # グラフが空かどうかを返します。
-    return @data.empty?
-  end
-
-  def size
-    # グラフの頂点数を返します。
-    return @data.length
   end
 
   def clear

@@ -88,21 +88,6 @@ class GraphData {
         return result
     }
     
-    func getNeighbors(_ vertex: String) -> [(String, Int)]? {
-        return data[vertex]
-    }
-    
-    func getEdgeWeight(_ vertex1: String, _ vertex2: String) -> Int? {
-        if let neighbors = data[vertex1] {
-            for (neighbor, weight) in neighbors {
-                if neighbor == vertex2 {
-                    return weight
-                }
-            }
-        }
-        return nil // 辺が存在しない場合
-    }
-    
     func addVertex(_ vertex: String) -> Bool {
         if data[vertex] == nil {
             data[vertex] = []
@@ -153,64 +138,7 @@ class GraphData {
         
         return true
     }
-    
-    func removeVertex(_ vertex: String) -> Bool {
-        if data[vertex] != nil {
-            // この頂点への参照を他の頂点の隣接リストから削除
-            for (v, _) in data {
-                if var neighbors = data[v] {
-                    neighbors = neighbors.filter { $0.0 != vertex }
-                    data[v] = neighbors
-                }
-            }
-            // 頂点自体を削除
-            data.removeValue(forKey: vertex)
-            return true
-        } else {
-            print("ERROR: \(vertex) は範囲外です")
-            return false
-        }
-    }
-    
-    func removeEdge(_ vertex1: String, _ vertex2: String) -> Bool {
-        if data[vertex1] != nil && data[vertex2] != nil {
-            var removed = false
-            
-            // vertex1 から vertex2 への辺を削除
-            if var neighbors = data[vertex1] {
-                let originalLen = neighbors.count
-                neighbors = neighbors.filter { $0.0 != vertex2 }
-                if neighbors.count < originalLen {
-                    removed = true
-                }
-                data[vertex1] = neighbors
-            }
-            
-            // vertex2 から vertex1 への辺を削除
-            if var neighbors = data[vertex2] {
-                let originalLen = neighbors.count
-                neighbors = neighbors.filter { $0.0 != vertex1 }
-                if neighbors.count < originalLen {
-                    removed = true
-                }
-                data[vertex2] = neighbors
-            }
-            
-            return removed // 少なくとも片方向が削除されたか
-        } else {
-            print("ERROR: \(vertex1) または \(vertex2) は範囲外です")
-            return false
-        }
-    }
-    
-    func isEmpty() -> Bool {
-        return data.isEmpty
-    }
-    
-    func size() -> Int {
-        return data.count
-    }
-    
+        
     func clear() -> Bool {
         data.removeAll()
         return true

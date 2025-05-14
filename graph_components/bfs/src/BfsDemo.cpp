@@ -30,60 +30,15 @@ public:
         return vertices;
     }
 
-    // グラフの全辺をベクターとして返す
-    std::vector<std::tuple<std::string, std::string, int>> get_edges() const {
-        std::unordered_set<std::tuple<std::string, std::string, int>> unique_edges;
-        for (const auto& vertex : _data) {
-            for (const auto& neighbor : vertex.second) {
-                // 辺を正規化して重複を避ける
-                auto edge = std::make_tuple(
-                    std::min(vertex.first, neighbor.first),
-                    std::max(vertex.first, neighbor.first),
-                    neighbor.second
-                );
-                unique_edges.insert(edge);
-            }
-        }
-        return std::vector<std::tuple<std::string, std::string, int>>(
-            unique_edges.begin(), unique_edges.end()
-        );
-    }
-
     // 指定された頂点の隣接ノードと辺の重みのベクターを返す
     const std::vector<std::pair<std::string, int>>* get_neighbors(const std::string& vertex) const {
         auto it = _data.find(vertex);
         return (it != _data.end()) ? &(it->second) : nullptr;
     }
 
-    // 指定された2つの頂点間の辺の重みを返す
-    int get_edge_weight(const std::string& vertex1, const std::string& vertex2) const {
-        auto it1 = _data.find(vertex1);
-        if (it1 != _data.end()) {
-            for (const auto& neighbor : it1->second) {
-                if (neighbor.first == vertex2) {
-                    return neighbor.second;
-                }
-            }
-        }
-        return -1; // 辺が存在しない場合
-    }
-
     // 頂点がグラフに存在するか確認する
     bool get_vertice(const std::string& vertex) const {
         return _data.find(vertex) != _data.end();
-    }
-
-    // 指定された2つの頂点間に辺が存在するかを確認する
-    bool get_edge(const std::string& vertex1, const std::string& vertex2) const {
-        auto it1 = _data.find(vertex1);
-        if (it1 != _data.end()) {
-            for (const auto& neighbor : it1->second) {
-                if (neighbor.first == vertex2) {
-                    return true;
-                }
-            }
-        }
-        return false;
     }
 
     // 新しい頂点をグラフに追加
@@ -127,69 +82,6 @@ public:
         }
 
         return true;
-    }
-
-    // 頂点とそれに関連する辺を削除
-    bool remove_vertex(const std::string& vertex) {
-        if (_data.find(vertex) != _data.end()) {
-            // この頂点への参照を他の頂点の隣接リストから削除する
-            for (auto& pair : _data) {
-                pair.second.erase(
-                    std::remove_if(pair.second.begin(), pair.second.end(),
-                        [&vertex](const std::pair<std::string, int>& neighbor) {
-                            return neighbor.first == vertex;
-                        }
-                    ),
-                    pair.second.end()
-                );
-            }
-            // 頂点自体を削除する
-            _data.erase(vertex);
-            return true;
-        }
-        return false;
-    }
-
-    // 両頂点間の辺を削除
-    bool remove_edge(const std::string& vertex1, const std::string& vertex2) {
-        if (_data.find(vertex1) != _data.end() && _data.find(vertex2) != _data.end()) {
-            bool removed = false;
-
-            // vertex1 から vertex2 への辺を削除
-            auto& neighbors1 = _data[vertex1];
-            neighbors1.erase(
-                std::remove_if(neighbors1.begin(), neighbors1.end(),
-                    [&vertex2](const std::pair<std::string, int>& neighbor) {
-                        return neighbor.first == vertex2;
-                    }
-                ),
-                neighbors1.end()
-            );
-
-            // vertex2 から vertex1 への辺を削除
-            auto& neighbors2 = _data[vertex2];
-            neighbors2.erase(
-                std::remove_if(neighbors2.begin(), neighbors2.end(),
-                    [&vertex1](const std::pair<std::string, int>& neighbor) {
-                        return neighbor.first == vertex1;
-                    }
-                ),
-                neighbors2.end()
-            );
-
-            return true;
-        }
-        return false;
-    }
-
-    // グラフが空かどうか
-    bool is_empty() const {
-        return _data.empty();
-    }
-
-    // グラフの頂点数を返す
-    size_t size() const {
-        return _data.size();
     }
 
     // グラフを空にする

@@ -19,70 +19,6 @@ class GraphData {
     return Object.keys(this._data);
   }
   
-  getEdges() {
-    // グラフの全辺をリストとして返します。
-    // 無向グラフの場合、[u, v, weight] の形式で返します。
-    // 重複を避けるためにセットを使用します。
-    const edges = new Set();
-    for (const vertex in this._data) {
-      for (const [neighbor, weight] of this._data[vertex]) {
-        // 辺を正規化してセットに追加 (小さい方の頂点を最初にするなど)
-        const edge = [vertex, neighbor].sort();
-        edges.add(JSON.stringify([edge[0], edge[1], weight])); // JSON文字列化してセットに格納
-      }
-    }
-    // JSONパースして配列として返す
-    return Array.from(edges).map(edge => JSON.parse(edge));
-  }
-  
-  getNeighbors(vertex) {
-    // 指定された頂点の隣接ノードと辺の重みのリストを返します。
-    // 形式: [[隣接頂点, 重み], ...]
-    if (vertex in this._data) {
-      return this._data[vertex];
-    } else {
-      return null; // 頂点が存在しない場合はNullを返す
-    }
-  }
-
-  getEdgeWeight(vertex1, vertex2) {
-    // 指定された2つの頂点間の辺の重みを返します。
-    // 辺が存在しない場合はNullを返します。
-    if (vertex1 in this._data && vertex2 in this._data) {
-      for (const [neighbor, weight] of this._data[vertex1]) {
-        if (neighbor === vertex2) {
-          return weight;
-        }
-      }
-    }
-    return null; // 辺が存在しない場合
-  }
-
-  getVertice(vertex) {
-    // 頂点がグラフに存在するか確認する
-    if (vertex in this._data) {
-      // 存在する場合は、その頂点の隣接リスト（関連する値）を返す
-      return this._data[vertex];
-    } else {
-      // 存在しない場合はメッセージを表示し、Nullを返す
-      console.log(`ERROR: ${vertex}は範囲外です`);
-      return null;
-    }
-  }
-
-  getEdge(vertex1, vertex2) {
-    // 指定された2つの頂点間に辺が存在するかを確認する
-    // 両方の頂点がグラフに存在する必要がある
-    if (vertex1 in this._data && vertex2 in this._data) {
-      // vertex1の隣接リストにvertex2が含まれているかを確認
-      // 無向グラフなので、片方を確認すれば十分
-      return this._data[vertex1].some(([neighbor]) => neighbor === vertex2);
-    } else {
-      // どちらかの頂点が存在しない場合は辺も存在しない
-      return false;
-    }
-  }
-
   addVertex(vertex) {
     // 新しい頂点をグラフに追加します。
     if (!(vertex in this._data)) {
@@ -133,58 +69,7 @@ class GraphData {
     
     return true;
   }
-  
-  removeVertex(vertex) {
-    // 頂点とそれに関連する辺を削除します。
-    if (vertex in this._data) {
-      // この頂点への参照を他の頂点の隣接リストから削除する
-      for (const v in this._data) {
-        this._data[v] = this._data[v].filter(([neighbor]) => neighbor !== vertex);
-      }
-      // 頂点自体を削除する
-      delete this._data[vertex];
-      return true;
-    } else {
-      console.log(`ERROR: ${vertex} は範囲外です`);
-      return false;
-    }
-  }
-
-  removeEdge(vertex1, vertex2) {
-    // 両頂点間の辺を削除します。
-    if (vertex1 in this._data && vertex2 in this._data) {
-      let removed = false;
-      // vertex1 から vertex2 への辺を削除
-      const originalLenV1 = this._data[vertex1].length;
-      this._data[vertex1] = this._data[vertex1].filter(([neighbor]) => neighbor !== vertex2);
-      if (this._data[vertex1].length < originalLenV1) {
-        removed = true;
-      }
-
-      // vertex2 から vertex1 への辺を削除
-      const originalLenV2 = this._data[vertex2].length;
-      this._data[vertex2] = this._data[vertex2].filter(([neighbor]) => neighbor !== vertex1);
-      if (this._data[vertex2].length < originalLenV2) {
-        removed = true;
-      }
-        
-      return removed; // 少なくとも片方向が削除されたか
-    } else {
-      console.log(`ERROR: ${vertex1} または ${vertex2} は範囲外です`);
-      return false;
-    }
-  }
-
-  isEmpty() {
-    // グラフが空かどうか
-    return Object.keys(this._data).length === 0;
-  }
-  
-  size() {
-    // グラフの頂点数を返す
-    return Object.keys(this._data).length;
-  }
-  
+    
   clear() {
     // グラフを空にする
     this._data = {};

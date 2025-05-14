@@ -55,48 +55,6 @@ public:
         return std::vector<std::tuple<std::string, std::string, int>>(edges.begin(), edges.end());
     }
 
-    // 指定された頂点の隣接ノードと辺の重みのベクターを返す
-    std::vector<std::pair<std::string, int>>* get_neighbors(const std::string& vertex) {
-        if (_data.find(vertex) != _data.end()) {
-            return &_data[vertex];
-        }
-        return nullptr; // 頂点が存在しない場合はnullptrを返す
-    }
-
-    // 指定された2つの頂点間の辺の重みを返す
-    int* get_edge_weight(const std::string& vertex1, const std::string& vertex2) {
-        if (_data.find(vertex1) != _data.end() && _data.find(vertex2) != _data.end()) {
-            for (auto& neighbor_pair : _data[vertex1]) {
-                if (neighbor_pair.first == vertex2) {
-                    return &neighbor_pair.second;
-                }
-            }
-        }
-        return nullptr; // 辺が存在しない場合はnullptrを返す
-    }
-
-    // 頂点がグラフに存在するか確認する
-    std::vector<std::pair<std::string, int>>* get_vertice(const std::string& vertex) {
-        if (_data.find(vertex) != _data.end()) {
-            return &_data[vertex];
-        } else {
-            std::cout << "ERROR: " << vertex << "は範囲外です" << std::endl;
-            return nullptr;
-        }
-    }
-
-    // 指定された2つの頂点間に辺が存在するかを確認する
-    bool get_edge(const std::string& vertex1, const std::string& vertex2) {
-        if (_data.find(vertex1) != _data.end() && _data.find(vertex2) != _data.end()) {
-            for (const auto& neighbor_pair : _data[vertex1]) {
-                if (neighbor_pair.first == vertex2) {
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
-
     // 新しい頂点をグラフに追加
     bool add_vertex(const std::string& vertex) {
         if (_data.find(vertex) == _data.end()) {
@@ -144,69 +102,9 @@ public:
         return true;
     }
 
-    // 頂点とそれに関連する辺を削除
-    bool remove_vertex(const std::string& vertex) {
-        if (_data.find(vertex) != _data.end()) {
-            // この頂点への参照を他の頂点の隣接リストから削除
-            for (auto& v : _data) {
-                auto& neighbors = v.second;
-                neighbors.erase(
-                    std::remove_if(neighbors.begin(), neighbors.end(),
-                        [&vertex](const std::pair<std::string, int>& p) { return p.first == vertex; }),
-                    neighbors.end()
-                );
-            }
-            // 頂点自体を削除
-            _data.erase(vertex);
-            return true;
-        } else {
-            std::cout << "ERROR: " << vertex << " は範囲外です" << std::endl;
-            return false;
-        }
-    }
-
-    // 両頂点間の辺を削除
-    bool remove_edge(const std::string& vertex1, const std::string& vertex2) {
-        if (_data.find(vertex1) != _data.end() && _data.find(vertex2) != _data.end()) {
-            bool removed = false;
-            
-            // vertex1 から vertex2 への辺を削除
-            size_t original_len_v1 = _data[vertex1].size();
-            _data[vertex1].erase(
-                std::remove_if(_data[vertex1].begin(), _data[vertex1].end(),
-                    [&vertex2](const std::pair<std::string, int>& p) { return p.first == vertex2; }),
-                _data[vertex1].end()
-            );
-            if (_data[vertex1].size() < original_len_v1) {
-                removed = true;
-            }
-
-            // vertex2 から vertex1 への辺を削除
-            size_t original_len_v2 = _data[vertex2].size();
-            _data[vertex2].erase(
-                std::remove_if(_data[vertex2].begin(), _data[vertex2].end(),
-                    [&vertex1](const std::pair<std::string, int>& p) { return p.first == vertex1; }),
-                _data[vertex2].end()
-            );
-            if (_data[vertex2].size() < original_len_v2) {
-                removed = true;
-            }
-
-            return removed; // 少なくとも片方向が削除されたか
-        } else {
-            std::cout << "ERROR: " << vertex1 << " または " << vertex2 << " は範囲外です" << std::endl;
-            return false;
-        }
-    }
-
     // グラフが空かどうか
     bool is_empty() {
         return _data.empty();
-    }
-
-    // グラフの頂点数を返す
-    size_t size() {
-        return _data.size();
     }
 
     // グラフを空にする

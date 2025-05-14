@@ -51,70 +51,6 @@ public class GraphData
         return edges.ToList();
     }
 
-    public List<Tuple<string, int>> GetNeighbors(string vertex)
-    {
-        // 指定された頂点の隣接ノードと辺の重みのリストを返します。
-        // 形式: [(隣接頂点, 重み), ...]
-        if (_data.ContainsKey(vertex))
-        {
-            return _data[vertex];
-        }
-        else
-        {
-            return null; // 頂点が存在しない場合はNullを返す
-        }
-    }
-
-    public int? GetEdgeWeight(string vertex1, string vertex2)
-    {
-        // 指定された2つの頂点間の辺の重みを返します。
-        // 辺が存在しない場合はNullを返します。
-        if (_data.ContainsKey(vertex1) && _data.ContainsKey(vertex2))
-        {
-            foreach (var neighborInfo in _data[vertex1])
-            {
-                if (neighborInfo.Item1 == vertex2)
-                {
-                    return neighborInfo.Item2;
-                }
-            }
-        }
-        return null; // 辺が存在しない場合
-    }
-
-    public List<Tuple<string, int>> GetVertice(string vertex)
-    {
-        // 頂点がグラフに存在するか確認する
-        if (_data.ContainsKey(vertex))
-        {
-            // 存在する場合は、その頂点の隣接リスト（関連する値）を返す
-            return _data[vertex];
-        }
-        else
-        {
-            // 存在しない場合はメッセージを表示し、Nullを返す
-            Console.WriteLine($"ERROR: {vertex}は範囲外です");
-            return null;
-        }
-    }
-
-    public bool GetEdge(string vertex1, string vertex2)
-    {
-        // 指定された2つの頂点間に辺が存在するかを確認する
-        // 両方の頂点がグラフに存在する必要がある
-        if (_data.ContainsKey(vertex1) && _data.ContainsKey(vertex2))
-        {
-            // vertex1の隣接リストにvertex2が含まれているかを確認
-            // 無向グラフなので、片方を確認すれば十分
-            return _data[vertex1].Any(neighborInfo => neighborInfo.Item1 == vertex2);
-        }
-        else
-        {
-            // どちらかの頂点が存在しない場合は辺も存在しない
-            return false;
-        }
-    }
-
     public bool AddVertex(string vertex)
     {
         // 新しい頂点をグラフに追加します。
@@ -178,68 +114,10 @@ public class GraphData
         return true;
     }
 
-    public bool RemoveVertex(string vertex)
-    {
-        // 頂点とそれに関連する辺を削除します。
-        if (_data.ContainsKey(vertex))
-        {
-            // この頂点への参照を他の頂点の隣接リストから削除する
-            foreach (var v in _data.Keys.ToList())
-            {
-                _data[v] = _data[v].Where(neighborInfo => neighborInfo.Item1 != vertex).ToList();
-            }
-            // 頂点自体を削除する
-            _data.Remove(vertex);
-            return true;
-        }
-        else
-        {
-            Console.WriteLine($"ERROR: {vertex} は範囲外です");
-            return false;
-        }
-    }
-
-    public bool RemoveEdge(string vertex1, string vertex2)
-    {
-        // 両頂点間の辺を削除します。
-        if (_data.ContainsKey(vertex1) && _data.ContainsKey(vertex2))
-        {
-            bool removed = false;
-            // vertex1 から vertex2 への辺を削除
-            int originalLenV1 = _data[vertex1].Count;
-            _data[vertex1] = _data[vertex1].Where(neighborInfo => neighborInfo.Item1 != vertex2).ToList();
-            if (_data[vertex1].Count < originalLenV1)
-            {
-                removed = true;
-            }
-
-            // vertex2 から vertex1 への辺を削除
-            int originalLenV2 = _data[vertex2].Count;
-            _data[vertex2] = _data[vertex2].Where(neighborInfo => neighborInfo.Item1 != vertex1).ToList();
-            if (_data[vertex2].Count < originalLenV2)
-            {
-                removed = true;
-            }
-
-            return removed; // 少なくとも片方向が削除されたか
-        }
-        else
-        {
-            Console.WriteLine($"ERROR: {vertex1} または {vertex2} は範囲外です");
-            return false;
-        }
-    }
-
     public bool IsEmpty()
     {
         // グラフが空かどうか
         return _data.Count == 0;
-    }
-
-    public int Size()
-    {
-        // グラフの頂点数を返す
-        return _data.Count;
     }
 
     public bool Clear()

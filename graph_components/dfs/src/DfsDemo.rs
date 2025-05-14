@@ -26,59 +26,6 @@ impl GraphData {
         self.data.keys().cloned().collect()
     }
 
-    fn get_edges(&self) -> Vec<(String, String, i32)> {
-        // グラフの全辺をベクトルとして返す（重複なし）
-        let mut edges = HashSet::new();
-        
-        for (vertex, neighbors) in &self.data {
-            for (neighbor, weight) in neighbors {
-                // 辺を正規化（小さい方の頂点を最初にする）
-                let mut vertices = vec![vertex.clone(), neighbor.clone()];
-                vertices.sort();
-                
-                edges.insert((vertices[0].clone(), vertices[1].clone(), *weight));
-            }
-        }
-        
-        edges.into_iter().collect()
-    }
-    
-    fn get_neighbors(&self, vertex: &str) -> Option<&Vec<(String, i32)>> {
-        // 指定された頂点の隣接ノードと辺の重みのリストを返す
-        self.data.get(vertex)
-    }
-    
-    fn get_edge_weight(&self, vertex1: &str, vertex2: &str) -> Option<i32> {
-        // 指定された2つの頂点間の辺の重みを返す
-        if let Some(neighbors) = self.data.get(vertex1) {
-            for (neighbor, weight) in neighbors {
-                if neighbor == vertex2 {
-                    return Some(*weight);
-                }
-            }
-        }
-        None
-    }
-    
-    fn get_vertice(&self, vertex: &str) -> Option<&Vec<(String, i32)>> {
-        // 頂点がグラフに存在するか確認
-        if let Some(neighbors) = self.data.get(vertex) {
-            Some(neighbors)
-        } else {
-            println!("ERROR: {}は範囲外です", vertex);
-            None
-        }
-    }
-    
-    fn get_edge(&self, vertex1: &str, vertex2: &str) -> bool {
-        // 指定された2つの頂点間に辺が存在するかを確認
-        if let Some(neighbors) = self.data.get(vertex1) {
-            neighbors.iter().any(|(neighbor, _)| neighbor == vertex2)
-        } else {
-            false
-        }
-    }
-    
     fn add_vertex(&mut self, vertex: &str) -> bool {
         // 新しい頂点をグラフに追加
         self.data.entry(vertex.to_string()).or_insert_with(Vec::new);
@@ -125,62 +72,7 @@ impl GraphData {
         
         true
     }
-    
-    fn remove_vertex(&mut self, vertex: &str) -> bool {
-        // 頂点とそれに関連する辺を削除
-        if self.data.contains_key(vertex) {
-            // この頂点への参照を他の頂点の隣接リストから削除
-            for v in self.get_vertices() {
-                if v != vertex {
-                    if let Some(neighbors) = self.data.get_mut(&v) {
-                        neighbors.retain(|(neighbor, _)| neighbor != vertex);
-                    }
-                }
-            }
-            // 頂点自体を削除
-            self.data.remove(vertex);
-            true
-        } else {
-            println!("ERROR: {} は範囲外です", vertex);
-            false
-        }
-    }
-    
-    fn remove_edge(&mut self, vertex1: &str, vertex2: &str) -> bool {
-        // 両頂点間の辺を削除
-        let mut removed = false;
         
-        // vertex1 から vertex2 への辺を削除
-        if let Some(neighbors) = self.data.get_mut(vertex1) {
-            let original_len = neighbors.len();
-            neighbors.retain(|(neighbor, _)| neighbor != vertex2);
-            if neighbors.len() < original_len {
-                removed = true;
-            }
-        }
-        
-        // vertex2 から vertex1 への辺を削除
-        if let Some(neighbors) = self.data.get_mut(vertex2) {
-            let original_len = neighbors.len();
-            neighbors.retain(|(neighbor, _)| neighbor != vertex1);
-            if neighbors.len() < original_len {
-                removed = true;
-            }
-        }
-        
-        removed
-    }
-    
-    fn is_empty(&self) -> bool {
-        // グラフが空かどうか
-        self.data.is_empty()
-    }
-    
-    fn size(&self) -> usize {
-        // グラフの頂点数を返す
-        self.data.len()
-    }
-    
     fn clear(&mut self) -> bool {
         // グラフを空にする
         self.data.clear();

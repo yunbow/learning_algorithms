@@ -73,25 +73,6 @@ class GraphData {
         return edges.toList()
     }
 
-    fun getNeighbors(vertex: String): List<Pair<String, Int>>? {
-        // 指定された頂点の隣接ノードと辺の重みのリストを返します。
-        // 形式: [(隣接頂点, 重み), ...]
-        return data[vertex]
-    }
-
-    fun getEdgeWeight(vertex1: String, vertex2: String): Int? {
-        // 指定された2つの頂点間の辺の重みを返します。
-        // 辺が存在しない場合はNullを返します。
-        if (vertex1 in data && vertex2 in data) {
-            for ((neighbor, weight) in data[vertex1]!!) {
-                if (neighbor == vertex2) {
-                    return weight
-                }
-            }
-        }
-        return null // 辺が存在しない場合
-    }
-
     fun addVertex(vertex: String): Boolean {
         // 新しい頂点をグラフに追加します。
         if (vertex !in data) {
@@ -143,57 +124,6 @@ class GraphData {
         }
         
         return true
-    }
-
-    fun removeVertex(vertex: String): Boolean {
-        // 頂点とそれに関連する辺を削除します。
-        if (vertex in data) {
-            // この頂点への参照を他の頂点の隣接リストから削除する
-            for (v in data.keys) {
-                data[v] = data[v]!!.filter { (neighbor, _) -> neighbor != vertex }.toMutableList()
-            }
-            // 頂点自体を削除する
-            data.remove(vertex)
-            return true
-        } else {
-            println("ERROR: $vertex は範囲外です")
-            return false
-        }
-    }
-
-    fun removeEdge(vertex1: String, vertex2: String): Boolean {
-        // 両頂点間の辺を削除します。
-        if (vertex1 in data && vertex2 in data) {
-            var removed = false
-            // vertex1 から vertex2 への辺を削除
-            val originalLenV1 = data[vertex1]!!.size
-            data[vertex1] = data[vertex1]!!.filter { (neighbor, _) -> neighbor != vertex2 }.toMutableList()
-            if (data[vertex1]!!.size < originalLenV1) {
-                removed = true
-            }
-
-            // vertex2 から vertex1 への辺を削除
-            val originalLenV2 = data[vertex2]!!.size
-            data[vertex2] = data[vertex2]!!.filter { (neighbor, _) -> neighbor != vertex1 }.toMutableList()
-            if (data[vertex2]!!.size < originalLenV2) {
-                removed = true
-            }
-                
-            return removed // 少なくとも片方向が削除されたか
-        } else {
-            println("ERROR: $vertex1 または $vertex2 は範囲外です")
-            return false
-        }
-    }
-
-    fun isEmpty(): Boolean {
-        // グラフが空かどうかを返します。
-        return data.isEmpty()
-    }
-
-    fun size(): Int {
-        // グラフの頂点数を返します。
-        return data.size
     }
 
     fun clear(): Boolean {

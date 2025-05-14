@@ -65,49 +65,6 @@ func (g *GraphData) GetEdges() [][3]interface{} {
 	return result
 }
 
-// GetNeighbors returns a list of neighbors and edge weights for a vertex
-func (g *GraphData) GetNeighbors(vertex string) []Edge {
-	if neighbors, exists := g.data[vertex]; exists {
-		return neighbors
-	}
-	return nil
-}
-
-// GetEdgeWeight returns the weight of an edge between two vertices
-func (g *GraphData) GetEdgeWeight(vertex1, vertex2 string) *int {
-	if neighbors, exists := g.data[vertex1]; exists {
-		for _, edge := range neighbors {
-			if edge.Neighbor == vertex2 {
-				return &edge.Weight
-			}
-		}
-	}
-	return nil
-}
-
-// GetVertice checks if a vertex exists and returns its neighbors
-func (g *GraphData) GetVertice(vertex string) []Edge {
-	if neighbors, exists := g.data[vertex]; exists {
-		return neighbors
-	}
-	fmt.Printf("ERROR: %sは範囲外です\n", vertex)
-	return nil
-}
-
-// GetEdge checks if an edge exists between two vertices
-func (g *GraphData) GetEdge(vertex1, vertex2 string) bool {
-	if neighbors, exists := g.data[vertex1]; exists {
-		if _, exists := g.data[vertex2]; exists {
-			for _, edge := range neighbors {
-				if edge.Neighbor == vertex2 {
-					return true
-				}
-			}
-		}
-	}
-	return false
-}
-
 // AddVertex adds a vertex to the graph
 func (g *GraphData) AddVertex(vertex string) bool {
 	if _, exists := g.data[vertex]; !exists {
@@ -151,74 +108,9 @@ func (g *GraphData) AddEdge(vertex1, vertex2 string, weight int) bool {
 	return true
 }
 
-// RemoveVertex removes a vertex and all its edges from the graph
-func (g *GraphData) RemoveVertex(vertex string) bool {
-	if _, exists := g.data[vertex]; exists {
-		// この頂点への参照を他の頂点の隣接リストから削除
-		for v := range g.data {
-			newNeighbors := []Edge{}
-			for _, edge := range g.data[v] {
-				if edge.Neighbor != vertex {
-					newNeighbors = append(newNeighbors, edge)
-				}
-			}
-			g.data[v] = newNeighbors
-		}
-		// 頂点自体を削除
-		delete(g.data, vertex)
-		return true
-	}
-	fmt.Printf("ERROR: %s は範囲外です\n", vertex)
-	return false
-}
-
-// RemoveEdge removes an edge between two vertices
-func (g *GraphData) RemoveEdge(vertex1, vertex2 string) bool {
-	if _, exists := g.data[vertex1]; exists {
-		if _, exists := g.data[vertex2]; exists {
-			removed := false
-			
-			// vertex1 -> vertex2 の辺を削除
-			originalLenV1 := len(g.data[vertex1])
-			newNeighborsV1 := []Edge{}
-			for _, edge := range g.data[vertex1] {
-				if edge.Neighbor != vertex2 {
-					newNeighborsV1 = append(newNeighborsV1, edge)
-				}
-			}
-			g.data[vertex1] = newNeighborsV1
-			if len(g.data[vertex1]) < originalLenV1 {
-				removed = true
-			}
-			
-			// vertex2 -> vertex1 の辺を削除
-			originalLenV2 := len(g.data[vertex2])
-			newNeighborsV2 := []Edge{}
-			for _, edge := range g.data[vertex2] {
-				if edge.Neighbor != vertex1 {
-					newNeighborsV2 = append(newNeighborsV2, edge)
-				}
-			}
-			g.data[vertex2] = newNeighborsV2
-			if len(g.data[vertex2]) < originalLenV2 {
-				removed = true
-			}
-			
-			return removed
-		}
-	}
-	fmt.Printf("ERROR: %s または %s は範囲外です\n", vertex1, vertex2)
-	return false
-}
-
 // IsEmpty checks if the graph is empty
 func (g *GraphData) IsEmpty() bool {
 	return len(g.data) == 0
-}
-
-// Size returns the number of vertices in the graph
-func (g *GraphData) Size() int {
-	return len(g.data)
 }
 
 // Clear empties the graph

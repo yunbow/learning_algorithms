@@ -94,22 +94,7 @@ impl<T: Hash + Eq + Copy + Ord + Debug> GraphData<T> {
         
         edges.into_iter().collect()
     }
-    
-    fn get_neighbors(&self, vertex: T) -> Option<&Vec<(T, i32)>> {
-        self.data.get(&vertex)
-    }
-    
-    fn get_edge_weight(&self, vertex1: T, vertex2: T) -> Option<i32> {
-        if let Some(neighbors) = self.data.get(&vertex1) {
-            for &(neighbor, weight) in neighbors {
-                if neighbor == vertex2 {
-                    return Some(weight);
-                }
-            }
-        }
-        None
-    }
-    
+        
     fn add_vertex(&mut self, vertex: T) -> bool {
         self.data.entry(vertex).or_insert_with(Vec::new);
         true
@@ -151,57 +136,6 @@ impl<T: Hash + Eq + Copy + Ord + Debug> GraphData<T> {
         }
         
         true
-    }
-    
-    fn remove_vertex(&mut self, vertex: T) -> bool {
-        if self.data.contains_key(&vertex) {
-            // 他の頂点の隣接リストから削除
-            for v in self.get_vertices() {
-                if v != vertex {
-                    if let Some(neighbors) = self.data.get_mut(&v) {
-                        neighbors.retain(|&(neighbor, _)| neighbor != vertex);
-                    }
-                }
-            }
-            // 頂点自体を削除
-            self.data.remove(&vertex);
-            true
-        } else {
-            println!("ERROR: {:?} は範囲外です", vertex);
-            false
-        }
-    }
-    
-    fn remove_edge(&mut self, vertex1: T, vertex2: T) -> bool {
-        let mut removed = false;
-        
-        // vertex1 -> vertex2の辺を削除
-        if let Some(neighbors) = self.data.get_mut(&vertex1) {
-            let original_len = neighbors.len();
-            neighbors.retain(|&(neighbor, _)| neighbor != vertex2);
-            if neighbors.len() < original_len {
-                removed = true;
-            }
-        }
-        
-        // vertex2 -> vertex1の辺を削除
-        if let Some(neighbors) = self.data.get_mut(&vertex2) {
-            let original_len = neighbors.len();
-            neighbors.retain(|&(neighbor, _)| neighbor != vertex1);
-            if neighbors.len() < original_len {
-                removed = true;
-            }
-        }
-        
-        removed
-    }
-    
-    fn is_empty(&self) -> bool {
-        self.data.is_empty()
-    }
-    
-    fn size(&self) -> usize {
-        self.data.len()
     }
     
     fn clear(&mut self) -> bool {
